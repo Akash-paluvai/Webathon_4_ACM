@@ -1,38 +1,41 @@
+"""
+Phase 1 — Confirmation Engine (DB write)
+=========================================
+On user confirmation after script analysis, write minimal fields
+to the existing DB schema. No schema changes. No new columns.
+"""
+
 from datetime import datetime, timezone
 from fastapi import HTTPException
 from models import FilmProject, Insight
 from schemas import FilmProjectResponse
 
 
-def confirm_phase1(payload: dict, db):
+def confirm_phase1(payload: dict, db) -> FilmProjectResponse:
+    """
+    Persist Phase 1 analysis results to DB.
 
+    Expected payload keys:
+        title, genre, language, theme, scale,
+        feasibilityScore, riskScore, audienceMatch,
+        goDecision, summary (optional)
+    """
     required = [
-        "title",
-        "genre",
-        "language",
-        "theme",
-        "scale",
-        "conceptRisk",
-        "targetAudience",
+        "title", "genre", "language", "theme", "scale",
+        "feasibilityScore", "riskScore", "audienceMatch",
         "goDecision",
     ]
+    for field in required:
+        if field not in payload:
+            raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
 
-    for r in required:
-        if r not in payload:
-            raise HTTPException(status_code=400, detail=f"{r} missing")
-
-    # Map Phase-1 outputs into existing columns
-    risk_map = {
-        "LOW": "good",
-        "MEDIUM": "atRisk",
-        "HIGH": "critical"
-    }
-
+    # ── Map riskScore → production_health ──
+    risk_map = {"LOW": "good", "MEDIUM": "atRisk", "HIGH": "critical"}
     production_health = risk_map.get(
-        payload["conceptRisk"].upper(),
-        "good"
+        str(payload["riskScore"]).upper(), "good"
     )
 
+    # ── Create project (existing schema only) ──
     project = FilmProject(
         title=payload["title"],
         genre=payload["genre"],
@@ -40,19 +43,20 @@ def confirm_phase1(payload: dict, db):
         theme=payload["theme"],
         scale=payload["scale"],
 
-        # Required non-null fields from schema
+        # Phase 1 computed fields mapped to existing columns
+        audience_type=payload["audienceMatch"],
+        production_health=production_health,
+        current_phase=2,
+
+        # Required non-null fields — sensible defaults for Phase 2
         budget_level="low",
         talent_strategy="unknown",
         planned_shoot_days=30,
-        audience_type=payload["targetAudience"],
-
         marketing_budget_level="unassigned",
         primary_marketing_channel="undefined",
         release_model="ott",
         distribution_confidence="low",
 
-        production_health=production_health,
-        current_phase=2,
         last_updated=datetime.now(timezone.utc),
     )
 
@@ -60,20 +64,22 @@ def confirm_phase1(payload: dict, db):
     db.commit()
     db.refresh(project)
 
-    # Store decision summary as insight (no schema change)
-    insight_text = f"""
-    Phase 1 Decision Summary:
-    Concept Risk: {payload['conceptRisk']}
-    Target Audience: {payload['targetAudience']}
-    Go Decision: {payload['goDecision']}
-    """
+    # ── Store insight with analysis results ──
+    summary_text = payload.get("summary", "")
+    insight_content = (
+        f"Phase 1 Analysis — Go Decision: {payload['goDecision']}\n"
+        f"Feasibility Score: {payload['feasibilityScore']}/100\n"
+        f"Risk Level: {payload['riskScore']}\n"
+        f"Audience Segment: {payload['audienceMatch']}\n"
+        f"---\n"
+        f"{summary_text}"
+    )
 
     insight = Insight(
         project_id=project.id,
-        content=insight_text,
-        timestamp=datetime.now(timezone.utc)
+        content=insight_content.strip(),
+        timestamp=datetime.now(timezone.utc),
     )
-
     db.add(insight)
     db.commit()
 
