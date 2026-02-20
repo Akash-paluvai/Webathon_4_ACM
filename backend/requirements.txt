@@ -4,3 +4,10 @@ sqlalchemy==2.0.35
 psycopg[binary]==3.2.3
 python-dotenv==1.0.1
 pydantic==2.9.2
+flask
+flask-cors
+sentence-transformers
+scikit-learn
+numpy
+pandas
+openai
