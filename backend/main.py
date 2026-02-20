@@ -20,16 +20,10 @@ from schemas import (
     InsightResponse,
 )
 
-# Phase-1
 from partA.analysis_engine import analyze_script_and_audience
-
-# Phase-2
-from partA.feasibility import compute_feasibility
-from partA.package_ing import evaluate_packaging
 from partA.confirm import confirm_phase2
 
-
-# Create DB tables
+# Create tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Film Producer Decision Support Platform API")
@@ -48,58 +42,18 @@ app.add_middleware(
 
 
 # ─────────────────────────────
-# PHASE 1 — SCRIPT ANALYSIS
-# Stores concept/audience data in DB
+# Phase 1 Analysis Endpoint
 # ─────────────────────────────
 @app.post("/api/phase1/analyze")
 def analyze_phase1(payload: dict):
     if not payload.get("scriptText"):
-        raise HTTPException(status_code=400, detail="Script text required")
+        raise HTTPException(status_code=400, detail="scriptText required")
 
     return analyze_script_and_audience(payload)
 
 
 # ─────────────────────────────
-# PHASE 2 — STEP 5
-# FEASIBILITY ANALYSIS
-# Reads Phase-1 data from DB
-# ─────────────────────────────
-@app.post("/api/phase2/feasibility/{project_id}")
-def phase2_feasibility(
-    project_id: int,
-    payload: dict,
-    db: Session = Depends(get_db)
-):
-    project = db.query(FilmProject).filter(FilmProject.id == project_id).first()
-
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-
-    return compute_feasibility(project, payload)
-
-
-# ─────────────────────────────
-# PHASE 2 — STEP 6
-# PACKAGING EVALUATION
-# Uses Phase-1 DB info
-# ─────────────────────────────
-@app.post("/api/phase2/packaging/{project_id}")
-def phase2_packaging(
-    project_id: int,
-    payload: dict,
-    db: Session = Depends(get_db)
-):
-    project = db.query(FilmProject).filter(FilmProject.id == project_id).first()
-
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-
-    return evaluate_packaging(project, payload)
-
-
-# ─────────────────────────────
-# PHASE 2 — STEP 7
-# FINAL CONFIRMATION + DB UPDATE
+# Health Check
 # ─────────────────────────────
 @app.post("/api/phase2/confirm/{project_id}")
 def phase2_confirm_route(
@@ -117,6 +71,10 @@ def phase2_confirm_route(
 def health_check():
     return {"status": "ok"}
 
+
+# ─────────────────────────────
+# RUN SERVER
+# ─────────────────────────────
 
 if __name__ == "__main__":
     import uvicorn
