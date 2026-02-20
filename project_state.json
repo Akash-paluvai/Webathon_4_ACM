@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Film Producer Decision Support Platform - A scalable baseline project structure for a hackathon. The platform helps film producers make data-driven decisions across 8 phases of the film lifecycle (from script selection to post-release optimization). Built with Next.js frontend, Flask backend, and Neon PostgreSQL database with a single canonical FilmProject model.",
+  "architectural_notes": [
+    "Next.js NEVER talks directly to database - Flask is the ONLY service that reads/writes Neon DB",
+    "Flask handles ALL business logic, AI logic, and DB access; Next.js only renders UI and calls Flask APIs",
+    "Single canonical FilmProject model flows through ALL 8 phases - no phase should introduce separate schema",
+    "AI logic lives ONLY in Flask backend, used only for summaries and recommendations",
+    "Tech stack: Next.js (App Router) + React + Tailwind CSS frontend, Python Flask backend, Neon PostgreSQL database"
+  ],
+  "known_issues": [],
+  "isFixRequest": false,
+  "imageRequirements": "## Required Images\n- Modern gradient background for landing page hero section with film/cinema theme using warm tones (hero-bg.dim_1920x1080.png)\n- Simple abstract icon representing film production phases as connected workflow (phases-icon.dim_256x256.png)",
+  "existing_features": [
+    {
+      "id": "feature-create-next-js-app-router-folder-structure-with-landing-page-app-page-tsx-project-list-page-app-projects-page-tsx-project-overview-page-app-projects-id-page-tsx-and-phase-route-shells-app-projects-id-phase-1-8-page-tsx-include-shared-root-layout-with-navigation-component",
+      "title": "Create Next.js App Router folder structure with landing page (app/page.tsx), project list page (app/projects/page.tsx), project overview page (app/projects/[id]/page.tsx), and phase route shells (app/projects/[id]/phase-[1-8]/page.tsx). Include shared root layout with navigation component.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-comprehensive-inline-comments-throughout-frontend-and-backend-code-explaining-where-phase-specific-business-logic-should-be-added-in-rules-folder-where-ai-logic-will-be-integrated-in-ai-summarizer-py-architectural-boundaries-that-must-not-be-changed-next-js-never-accesses-database-directly-flask-is-the-only-service-that-reads-writes-to-neon-extension-points-for-parallel-development-each-phase-route-is-independent-and-warnings-against-mixing-frontend-backend-logic-or-creating-additional-schemas",
+      "title": "Add comprehensive inline comments throughout frontend and backend code explaining: where phase-specific business logic should be added (in rules/ folder), where AI logic will be integrated (in ai/summarizer.py), architectural boundaries that must not be changed (Next.js never accesses database directly, Flask is the only service that reads/writes to Neon), extension points for parallel development (each phase route is independent), and warnings against mixing frontend/backend logic or creating additional schemas.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-environment-configuration-files-env-example-for-next-js-with-next-public-api-url-placeholder-env-example-for-flask-with-database-url-neon-connection-string-flask-env-and-optional-ai-api-key-placeholder-include-setup-instructions-in-readme-files-for-both-frontend-and-backend",
+      "title": "Create environment configuration files: .env.example for Next.js with NEXT_PUBLIC_API_URL placeholder, .env.example for Flask with DATABASE_URL (Neon connection string), FLASK_ENV, and optional AI_API_KEY placeholder. Include setup instructions in README files for both frontend and backend.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Create Next.js folder structure with landing page, project list, project overview, and phase 1-8 route shells",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Create Flask backend structure with app initialization, project routes, phase routes (phase1-8.py), rules folder, and AI placeholder",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Define API contracts for create project, get project, update phase data, and generate insights",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Create Neon PostgreSQL schema for single film_project table with canonical FilmProject model",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Create Flask backend structure with app initialization (app.py or __init__.py), project routes module (routes/projects.py), eight phase route modules (routes/phase1.py through routes/phase8.py), rules folder for phase-specific business logic (rules/), AI folder with placeholder summarizer (ai/summarizer.py), and database access layer (db/connection.py and db/models.py).",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Define and implement API contracts in Flask: POST /api/projects (create new film project with title, genre, language, theme, scale), GET /api/projects (list all projects), GET /api/projects/:id (get single project with full FilmProject data), PUT /api/projects/:id/phase/:phaseNumber (update phase-specific data for a project), POST /api/projects/:id/insights (generate AI insights for current phase). All endpoints must return JSON responses with appropriate status codes.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Create Neon PostgreSQL schema with single film_project table containing all FilmProject model fields: id (UUID primary key), title (VARCHAR), current_phase (INTEGER), genre (VARCHAR), language (VARCHAR), theme (VARCHAR), scale (ENUM: INDIE, MID, LARGE), concept_risk (ENUM: LOW, MEDIUM, HIGH), target_audience (TEXT), go_decision (BOOLEAN), budget_level (ENUM: LOW, MEDIUM, HIGH), talent_strategy (ENUM: NEW, MIXED, STAR), production_feasibility (ENUM: GOOD, RISKY), planned_shoot_days (INTEGER), actual_shoot_days (INTEGER), production_health (ENUM: STABLE, AT_RISK), audience_type (ENUM: NICHE, REGIONAL, MASS), audience_interest_score (INTEGER), test_strategy (ENUM: FESTIVAL, PRIVATE, DIGITAL), marketing_budget_level (ENUM: LOW, MEDIUM, HIGH), primary_marketing_channel (ENUM: INFLUENCER, FESTIVAL, ADS, PR), marketing_risk (ENUM: LOW, MEDIUM, HIGH), release_model (ENUM: THEATRE, OTT, HYBRID), distribution_confidence (ENUM: LOW, MEDIUM, HIGH), release_window (VARCHAR), competition_level (ENUM: LOW, MEDIUM, HIGH), discoverability_risk (ENUM: LOW, MEDIUM, HIGH), audience_response (ENUM: WEAK, MODERATE, STRONG), monetization_options (TEXT ARRAY), learning_summary (TEXT), insights (JSONB for array of insight objects), last_updated (TIMESTAMP). Include migration script and connection configuration.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Implement frontend API client service (lib/api.ts or services/api.ts) that wraps all Flask API calls with proper TypeScript types matching the FilmProject model. Include methods for createProject, getProjects, getProject, updatePhase, and generateInsights. Configure Flask backend base URL through environment variable (NEXT_PUBLIC_API_URL).",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "Film Producer Decision Support Platform",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

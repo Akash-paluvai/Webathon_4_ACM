@@ -1,0 +1,193 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Build baseline project structure for Film Producer Decision Support Platform",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Create React App Router folder structure with landing page, project list page, project overview page, and eight phase route shells with shared navigation",
+      "acceptanceCriteria": [
+        "Landing page exists at app/page.tsx with basic hero section",
+        "Project list page displays at app/projects/page.tsx",
+        "Project overview page renders at app/projects/[id]/page.tsx with dynamic project ID",
+        "Eight phase route shells exist at app/projects/[id]/phase-1/page.tsx through phase-8/page.tsx",
+        "Root layout (app/layout.tsx) includes navigation component with links to all main pages",
+        "All pages use Tailwind CSS for styling with minimal UI components"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/app/page.tsx",
+          "operation": "create",
+          "description": "Create landing page with hero section featuring the generated hero-bg.dim_1920x1080.png background image from frontend/public/assets/generated/hero-bg.dim_1920x1080.png. Include headline introducing FilmFlow Studio platform, value proposition text, and call-to-action button linking to /projects. Use Tailwind CSS for responsive layout and styling."
+        },
+        {
+          "path": "frontend/src/app/projects/page.tsx",
+          "operation": "create",
+          "description": "Create project list page that displays all film projects in a grid layout. Each project card shows title, genre, current phase, and scale. Include 'Create New Project' button that navigates to a create form. Use shadcn-ui Card component for project display. Fetch projects using the API client service."
+        },
+        {
+          "path": "frontend/src/app/projects/[id]/page.tsx",
+          "operation": "create",
+          "description": "Create project overview page with dynamic route parameter for project ID. Display full project details including all FilmProject fields from backend interface. Show project metadata, current phase indicator, and navigation links to all 8 phase pages. Include phases-icon.dim_256x256.png from frontend/public/assets/generated/phases-icon.dim_256x256.png to visualize workflow. Fetch single project data using getFilmProject from API client."
+        },
+        {
+          "path": "frontend/src/app/projects/[id]/phase-1/page.tsx",
+          "operation": "create",
+          "description": "Create Phase 1 (Concept Development) route shell. Display phase title, project context, and placeholder form for concept-specific inputs (risk level, target audience, go/no-go decision). Include comments indicating where phase-specific validation logic should be integrated. Link back to project overview. Phase is independent and can be developed in parallel with other phases."
+        },
+        {
+          "path": "frontend/src/app/projects/[id]/phase-2/page.tsx",
+          "operation": "create",
+          "description": "Create Phase 2 (Script & Budget) route shell. Display phase title and placeholder form for budget level, talent strategy, and production feasibility. Include comments for future business logic integration. Link back to project overview. Independent phase for parallel development."
+        },
+        {
+          "path": "frontend/src/app/projects/[id]/phase-3/page.tsx",
+          "operation": "create",
+          "description": "Create Phase 3 (Pre-Production) route shell. Display phase title and placeholder form for planned shoot days and production planning inputs. Include comments for extension points. Link back to project overview. Independent phase."
+        },
+        {
+          "path": "frontend/src/app/projects/[id]/phase-4/page.tsx",
+          "operation": "create",
+          "description": "Create Phase 4 (Production) route shell. Display phase title and placeholder form for actual shoot days and production health tracking. Include comments for monitoring logic integration. Link back to project overview. Independent phase."
+        },
+        {
+          "path": "frontend/src/app/projects/[id]/phase-5/page.tsx",
+          "operation": "create",
+          "description": "Create Phase 5 (Post-Production) route shell. Display phase title and placeholder form for post-production tracking and quality indicators. Include comments for workflow integration. Link back to project overview. Independent phase."
+        },
+        {
+          "path": "frontend/src/app/projects/[id]/phase-6/page.tsx",
+          "operation": "create",
+          "description": "Create Phase 6 (Test Screenings) route shell. Display phase title and placeholder form for audience type, interest score, and test strategy. Include comments for feedback collection logic. Link back to project overview. Independent phase."
+        },
+        {
+          "path": "frontend/src/app/projects/[id]/phase-7/page.tsx",
+          "operation": "create",
+          "description": "Create Phase 7 (Marketing) route shell. Display phase title and placeholder form for marketing budget level, primary channel, and marketing risk assessment. Include comments for campaign tracking integration. Link back to project overview. Independent phase."
+        },
+        {
+          "path": "frontend/src/app/projects/[id]/phase-8/page.tsx",
+          "operation": "create",
+          "description": "Create Phase 8 (Distribution & Release) route shell. Display phase title and placeholder form for release model, distribution confidence, release window, and competition level. Include comments for release tracking logic. Link back to project overview. Independent phase."
+        },
+        {
+          "path": "frontend/src/app/layout.tsx",
+          "operation": "modify",
+          "description": "Update root layout to include Navigation component in the layout structure. Wrap children with navigation header that remains consistent across all pages. Ensure Tailwind CSS classes are applied and layout supports the app directory structure."
+        },
+        {
+          "path": "frontend/src/components/Navigation.tsx",
+          "operation": "create",
+          "description": "Create Navigation component with links to home (/), projects list (/projects), and branding for FilmFlow Studio. Include responsive menu for mobile devices. Add comments explaining the 8-phase structure and that phase links are available from project overview pages. Use Tailwind CSS for styling and shadcn-ui Button component for navigation actions."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Add comprehensive inline comments explaining architecture boundaries, extension points, phase independence, and warnings against mixing frontend/backend logic",
+      "acceptanceCriteria": [
+        "Every phase route file (phase1.tsx through phase8.tsx) includes header comments explaining its purpose and where validation logic should be added",
+        "Rules folder includes README or comments explaining how to add phase-specific business rules without modifying core architecture",
+        "AI summarizer includes detailed comments on integration points for AI models and expected input/output format",
+        "Database access layer includes comments warning that only backend should access storage",
+        "Frontend API client includes comments explaining that all data operations must go through backend APIs",
+        "Root README or architecture document explains the single FilmProject model pattern and why additional schemas should not be added",
+        "Navigation component includes comments about the 8-phase structure and extension approach"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/app/projects/[id]/phase-1/page.tsx",
+          "operation": "modify",
+          "description": "Add header comments explaining Phase 1 purpose (Concept Development), where phase-specific validation logic should be integrated (backend rules), and that this phase is independent for parallel development. Warn against adding business logic or database access in frontend."
+        },
+        {
+          "path": "frontend/src/app/projects/[id]/phase-2/page.tsx",
+          "operation": "modify",
+          "description": "Add header comments explaining Phase 2 purpose (Script & Budget), backend integration points, and parallel development independence. Include warnings about architecture boundaries."
+        },
+        {
+          "path": "frontend/src/app/projects/[id]/phase-3/page.tsx",
+          "operation": "modify",
+          "description": "Add header comments explaining Phase 3 purpose (Pre-Production), extension points for production planning logic, and independence. Include architecture boundary warnings."
+        },
+        {
+          "path": "frontend/src/app/projects/[id]/phase-4/page.tsx",
+          "operation": "modify",
+          "description": "Add header comments explaining Phase 4 purpose (Production), monitoring integration points, and parallel development capability. Include architecture warnings."
+        },
+        {
+          "path": "frontend/src/app/projects/[id]/phase-5/page.tsx",
+          "operation": "modify",
+          "description": "Add header comments explaining Phase 5 purpose (Post-Production), workflow integration points, and independence. Include architecture boundary documentation."
+        },
+        {
+          "path": "frontend/src/app/projects/[id]/phase-6/page.tsx",
+          "operation": "modify",
+          "description": "Add header comments explaining Phase 6 purpose (Test Screenings), feedback collection integration, and parallel development. Include architecture warnings."
+        },
+        {
+          "path": "frontend/src/app/projects/[id]/phase-7/page.tsx",
+          "operation": "modify",
+          "description": "Add header comments explaining Phase 7 purpose (Marketing), campaign tracking integration, and independence. Include architecture boundary documentation."
+        },
+        {
+          "path": "frontend/src/app/projects/[id]/phase-8/page.tsx",
+          "operation": "modify",
+          "description": "Add header comments explaining Phase 8 purpose (Distribution & Release), release tracking integration, and parallel development capability. Include architecture warnings."
+        },
+        {
+          "path": "frontend/src/components/Navigation.tsx",
+          "operation": "modify",
+          "description": "Add comments explaining the 8-phase structure, that phases are accessed from project overview pages, architectural pattern of phase independence, and extension approach for adding new features without modifying core navigation."
+        },
+        {
+          "path": "frontend/README.md",
+          "operation": "create",
+          "description": "Create comprehensive README explaining React + Motoko architecture, that frontend NEVER accesses Internet Computer storage directly, all data operations go through backend actor methods, single FilmProject model pattern across all 8 phases, phase independence for parallel development, and warnings against adding database logic to frontend. Include setup instructions and architecture boundaries."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Implement frontend API client service that wraps all backend actor calls with proper TypeScript types matching the FilmProject model from backend interface",
+      "acceptanceCriteria": [
+        "API client service file exists with TypeScript interface definitions matching FilmProject model exactly",
+        "createProject method sends request to backend createFilmProject method",
+        "getProjects method fetches list from getAllFilmProjects backend method",
+        "getProject method fetches single project from getFilmProject backend method",
+        "updatePhase method sends request to updateFilmProjectPhase backend method",
+        "generateInsights method sends request to addProjectInsight backend method",
+        "All methods include proper error handling and return typed responses",
+        "Comments in API client warn against adding database access or business logic to frontend"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/lib/api.ts",
+          "operation": "create",
+          "description": "Create API client service that wraps backend actor calls using the backend interface types. Import FilmProject, ProjectId, and enum types from backend.d.ts. Implement createProject (calls createFilmProject), getProjects (calls getAllFilmProjects), getProject (calls getFilmProject), updatePhase (calls updateFilmProjectPhase), and generateInsights (calls addProjectInsight). Include proper error handling, typed responses, and comments warning that frontend must never access storage directly - all operations go through backend actor methods. Use the core-infrastructure component's backend connection for actor access."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Create environment configuration files and setup instructions emphasizing React + Motoko architecture with Internet Computer backend",
+      "acceptanceCriteria": [
+        "Frontend .env.example file includes necessary environment variables for Internet Computer connection",
+        "Frontend README includes setup section with npm install, environment configuration, and npm run dev instructions",
+        "Both READMEs reference the architecture rules and emphasize that React never accesses storage directly"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/.env.example",
+          "operation": "create",
+          "description": "Create environment example file for frontend with Internet Computer canister configuration variables. Include comments explaining that backend connection is configured through the core-infrastructure component and no direct storage access is needed from frontend."
+        },
+        {
+          "path": "frontend/README.md",
+          "operation": "modify",
+          "description": "Add setup section with npm install instructions, environment configuration steps, and npm run dev command. Include architecture section emphasizing that React frontend never accesses Internet Computer storage directly - all data operations must go through the Motoko backend actor. Reference single FilmProject model pattern and phase independence."
+        }
+      ]
+    }
+  ]
+}

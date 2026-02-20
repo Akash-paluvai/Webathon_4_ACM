@@ -1,0 +1,60 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-create-next-js-app-router-folder-structure-with-landing-page-app-page-tsx-project-list-page-app-projects-page-tsx-project-overview-page-app-projects-id-page-tsx-and-phase-route-shells-app-projects-id-phase-1-8-page-tsx-include-shared-root-layout-with-navigation-component",
+      "featureTitle": "Create Next.js App Router folder structure with landing page (app/page.tsx), project list page (app/projects/page.tsx), project overview page (app/projects/[id]/page.tsx), and phase route shells (app/projects/[id]/phase-[1-8]/page.tsx). Include shared root layout with navigation component.",
+      "files": [
+        "frontend/src/components/Navigation.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-comprehensive-inline-comments-throughout-frontend-and-backend-code-explaining-where-phase-specific-business-logic-should-be-added-in-rules-folder-where-ai-logic-will-be-integrated-in-ai-summarizer-py-architectural-boundaries-that-must-not-be-changed-next-js-never-accesses-database-directly-flask-is-the-only-service-that-reads-writes-to-neon-extension-points-for-parallel-development-each-phase-route-is-independent-and-warnings-against-mixing-frontend-backend-logic-or-creating-additional-schemas",
+      "featureTitle": "Add comprehensive inline comments throughout frontend and backend code explaining: where phase-specific business logic should be added (in rules/ folder), where AI logic will be integrated (in ai/summarizer.py), architectural boundaries that must not be changed (Next.js never accesses database directly, Flask is the only service that reads/writes to Neon), extension points for parallel development (each phase route is independent), and warnings against mixing frontend/backend logic or creating additional schemas.",
+      "files": [
+        "frontend/README.md",
+        "frontend/src/components/Navigation.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-create-environment-configuration-files-env-example-for-next-js-with-next-public-api-url-placeholder-env-example-for-flask-with-database-url-neon-connection-string-flask-env-and-optional-ai-api-key-placeholder-include-setup-instructions-in-readme-files-for-both-frontend-and-backend",
+      "featureTitle": "Create environment configuration files: .env.example for Next.js with NEXT_PUBLIC_API_URL placeholder, .env.example for Flask with DATABASE_URL (Neon connection string), FLASK_ENV, and optional AI_API_KEY placeholder. Include setup instructions in README files for both frontend and backend.",
+      "files": [
+        "frontend/README.md"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "frontend/src/App.tsx": "Main application component with TanStack Router setup, defining all routes (landing, projects, project overview, and 8 phase pages) with a shared layout including navigation and footer.",
+  "frontend/src/components/Navigation.tsx": "Navigation header component providing consistent site-wide navigation with links to home and projects pages, includes architecture notes about phase independence.",
+  "frontend/src/pages/LandingPage.tsx": "Landing page with hero section featuring generated background image, value proposition, feature highlights, and call-to-action buttons to guide users to projects.",
+  "frontend/src/pages/ProjectListPage.tsx": "Project list page displaying all film projects in a grid layout with metadata cards, includes create project dialog trigger and empty state handling, now imports BudgetLevel from local types.",
+  "frontend/src/pages/ProjectOverviewPage.tsx": "Project overview page showing comprehensive project details and navigation to all 8 phase pages, serves as central hub for phase-specific workflows.",
+  "frontend/src/pages/Phase1Page.tsx": "Phase 1 (Script Selection & Concept Evaluation) shell page with placeholder content and architecture notes explaining extension points for concept evaluation forms and backend integration.",
+  "frontend/src/pages/Phase2Page.tsx": "Phase 2 (Packaging & Pre-Production Strategy) shell page with placeholder for budget and talent planning forms, includes architecture notes about phase independence.",
+  "frontend/src/pages/Phase3Page.tsx": "Phase 3 (Production Phase) shell page with placeholder for production tracking forms including shoot days and production health monitoring.",
+  "frontend/src/pages/Phase4Page.tsx": "Phase 4 (Post-Production & Market Testing) shell page with placeholder for post-production workflow and audience testing forms.",
+  "frontend/src/pages/Phase5Page.tsx": "Phase 5 (Marketing Strategy Planning) shell page with placeholder for marketing strategy, budget allocation, and channel selection forms.",
+  "frontend/src/pages/Phase6Page.tsx": "Phase 6 (Distribution Strategy & Negotiation) shell page with placeholder for distribution planning and deal negotiation tracking forms.",
+  "frontend/src/pages/Phase7Page.tsx": "Phase 7 (Release & Discoverability) shell page with placeholder for release timing optimization and discoverability planning forms.",
+  "frontend/src/pages/Phase8Page.tsx": "Phase 8 (Post-Release Optimization & Monetization) shell page with placeholder for performance tracking, monetization, and learning documentation forms.",
+  "frontend/src/components/CreateProjectDialog.tsx": "Dialog component with comprehensive form for creating new film projects, collects all required FilmProject fields and calls backend createFilmProject method, now imports BudgetLevel from local types.",
+  "frontend/src/hooks/useQueries.ts": "React Query hooks for all backend operations including project CRUD, phase updates, and insights management with proper data invalidation and caching, now imports BudgetLevel from local types.",
+  "frontend/README.md": "Comprehensive documentation explaining React + Motoko architecture, setup instructions, development guidelines, phase structure, and critical rules about frontend never accessing storage directly.",
+  "frontend/src/index.css": "Global styles with customized OKLCH color system using cinematic warm palette for light mode and deep cinematic palette for dark mode.",
+  "frontend/src/lib/types.ts": "Frontend type definitions file containing types used in the frontend but not exported by the backend interface, specifically the BudgetLevel type."
+}

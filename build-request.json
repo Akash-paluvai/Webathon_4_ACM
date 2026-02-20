@@ -1,0 +1,173 @@
+{
+  "kind": "build_request",
+  "title": "Build baseline project structure for Film Producer Decision Support Platform",
+  "projectName": "FilmFlow Studio",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Create Next.js App Router folder structure with landing page (app/page.tsx), project list page (app/projects/page.tsx), project overview page (app/projects/[id]/page.tsx), and phase route shells (app/projects/[id]/phase-[1-8]/page.tsx). Include shared root layout with navigation component.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Landing page exists at app/page.tsx with basic hero section",
+        "Project list page displays at app/projects/page.tsx",
+        "Project overview page renders at app/projects/[id]/page.tsx with dynamic project ID",
+        "Eight phase route shells exist at app/projects/[id]/phase-1/page.tsx through phase-8/page.tsx",
+        "Root layout (app/layout.tsx) includes navigation component with links to all main pages",
+        "All pages use Tailwind CSS for styling with minimal UI components"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Create Flask backend structure with app initialization (app.py or __init__.py), project routes module (routes/projects.py), eight phase route modules (routes/phase1.py through routes/phase8.py), rules folder for phase-specific business logic (rules/), AI folder with placeholder summarizer (ai/summarizer.py), and database access layer (db/connection.py and db/models.py).",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Flask app initialization exists with CORS enabled and route registration",
+        "Project routes module handles project CRUD operations",
+        "Eight separate phase route modules exist (phase1.py through phase8.py) as shells",
+        "Rules folder structure exists with placeholder files for phase-specific validation logic",
+        "AI folder contains summarizer.py with placeholder function for generating insights",
+        "Database layer includes connection.py for Neon PostgreSQL connection and models.py defining FilmProject operations",
+        "All modules include clear comments explaining their responsibilities and extension points"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Define and implement API contracts in Flask: POST /api/projects (create new film project with title, genre, language, theme, scale), GET /api/projects (list all projects), GET /api/projects/:id (get single project with full FilmProject data), PUT /api/projects/:id/phase/:phaseNumber (update phase-specific data for a project), POST /api/projects/:id/insights (generate AI insights for current phase). All endpoints must return JSON responses with appropriate status codes.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "POST /api/projects endpoint creates new project and returns project ID with 201 status",
+        "GET /api/projects endpoint returns array of all projects with 200 status",
+        "GET /api/projects/:id endpoint returns single FilmProject object with all fields with 200 status or 404 if not found",
+        "PUT /api/projects/:id/phase/:phaseNumber endpoint validates phase data, updates appropriate FilmProject fields, and returns updated project with 200 status",
+        "POST /api/projects/:id/insights endpoint calls AI summarizer and appends new insights to project.insights array with 200 status",
+        "All endpoints include error handling with appropriate HTTP status codes (400, 404, 500)",
+        "API responses follow consistent JSON structure with data/error fields"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Create Neon PostgreSQL schema with single film_project table containing all FilmProject model fields: id (UUID primary key), title (VARCHAR), current_phase (INTEGER), genre (VARCHAR), language (VARCHAR), theme (VARCHAR), scale (ENUM: INDIE, MID, LARGE), concept_risk (ENUM: LOW, MEDIUM, HIGH), target_audience (TEXT), go_decision (BOOLEAN), budget_level (ENUM: LOW, MEDIUM, HIGH), talent_strategy (ENUM: NEW, MIXED, STAR), production_feasibility (ENUM: GOOD, RISKY), planned_shoot_days (INTEGER), actual_shoot_days (INTEGER), production_health (ENUM: STABLE, AT_RISK), audience_type (ENUM: NICHE, REGIONAL, MASS), audience_interest_score (INTEGER), test_strategy (ENUM: FESTIVAL, PRIVATE, DIGITAL), marketing_budget_level (ENUM: LOW, MEDIUM, HIGH), primary_marketing_channel (ENUM: INFLUENCER, FESTIVAL, ADS, PR), marketing_risk (ENUM: LOW, MEDIUM, HIGH), release_model (ENUM: THEATRE, OTT, HYBRID), distribution_confidence (ENUM: LOW, MEDIUM, HIGH), release_window (VARCHAR), competition_level (ENUM: LOW, MEDIUM, HIGH), discoverability_risk (ENUM: LOW, MEDIUM, HIGH), audience_response (ENUM: WEAK, MODERATE, STRONG), monetization_options (TEXT ARRAY), learning_summary (TEXT), insights (JSONB for array of insight objects), last_updated (TIMESTAMP). Include migration script and connection configuration.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "SQL schema file (schema.sql or migration script) creates film_project table with exact FilmProject model structure",
+        "All ENUM types are properly defined in PostgreSQL",
+        "Primary key is UUID type with default generation",
+        "insights field uses JSONB type to store array of phase/type/message objects",
+        "monetization_options uses TEXT ARRAY type",
+        "last_updated field has default value of CURRENT_TIMESTAMP",
+        "Schema includes comments explaining that this is the SINGLE canonical table for all 8 phases",
+        "Database connection configuration (db/connection.py) includes Neon connection string setup with environment variable support"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Add comprehensive inline comments throughout frontend and backend code explaining: where phase-specific business logic should be added (in rules/ folder), where AI logic will be integrated (in ai/summarizer.py), architectural boundaries that must not be changed (Next.js never accesses database directly, Flask is the only service that reads/writes to Neon), extension points for parallel development (each phase route is independent), and warnings against mixing frontend/backend logic or creating additional schemas.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Every phase route file (phase1.py through phase8.py) includes header comments explaining its purpose and where validation logic should be added",
+        "Rules folder includes README or comments explaining how to add phase-specific business rules without modifying core architecture",
+        "AI summarizer.py includes detailed comments on integration points for AI models and expected input/output format",
+        "Database access layer includes comments warning that only Flask should access the database",
+        "Frontend API client includes comments explaining that all data operations must go through Flask APIs",
+        "Root README or architecture document explains the single FilmProject model pattern and why additional schemas should not be added",
+        "Navigation component includes comments about the 8-phase structure and extension approach"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Implement frontend API client service (lib/api.ts or services/api.ts) that wraps all Flask API calls with proper TypeScript types matching the FilmProject model. Include methods for createProject, getProjects, getProject, updatePhase, and generateInsights. Configure Flask backend base URL through environment variable (NEXT_PUBLIC_API_URL).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "API client service file exists with TypeScript interface definitions matching FilmProject model exactly",
+        "createProject method sends POST request to Flask /api/projects endpoint",
+        "getProjects method fetches list from GET /api/projects endpoint",
+        "getProject method fetches single project from GET /api/projects/:id endpoint",
+        "updatePhase method sends PUT request to /api/projects/:id/phase/:phaseNumber endpoint",
+        "generateInsights method sends POST request to /api/projects/:id/insights endpoint",
+        "All methods include proper error handling and return typed responses",
+        "Flask API base URL is configurable via NEXT_PUBLIC_API_URL environment variable",
+        "Comments in API client warn against adding database access or business logic to frontend"
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Create environment configuration files: .env.example for Next.js with NEXT_PUBLIC_API_URL placeholder, .env.example for Flask with DATABASE_URL (Neon connection string), FLASK_ENV, and optional AI_API_KEY placeholder. Include setup instructions in README files for both frontend and backend.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Frontend .env.example file includes NEXT_PUBLIC_API_URL with example Flask backend URL",
+        "Backend .env.example file includes DATABASE_URL with Neon PostgreSQL connection string format",
+        "Backend .env.example includes FLASK_ENV (development/production) and AI_API_KEY placeholder with comment",
+        "Frontend README includes setup section with npm install, environment configuration, and npm run dev instructions",
+        "Backend README includes setup section with pip install, database migration, environment configuration, and flask run instructions",
+        "Both READMEs reference the architecture rules and emphasize that Next.js never accesses database directly"
+      ]
+    }
+  ],
+  "constraints": [
+    "Next.js must NEVER talk directly to the database",
+    "Flask is the ONLY service that reads/writes Neon DB",
+    "Do NOT use Next.js — use React with TypeScript instead for frontend",
+    "Do NOT use Flask/Python — use Motoko for backend instead",
+    "Do NOT use PostgreSQL/Neon — use Internet Computer canister storage instead",
+    "Use the platform's React + Motoko architecture with single-actor pattern",
+    "All backend logic must be in a single Motoko actor file (backend/main.mo)",
+    "Frontend must use React with Tailwind CSS and Shadcn components only",
+    "Do NOT add external database connections or third-party backend services",
+    "Keep all 8 phases updating the SAME FilmProject model without separate schemas",
+    "AI logic placeholders should be comments indicating future integration points, not actual AI service calls"
+  ],
+  "nonGoals": [
+    "Complete feature implementation for any phase",
+    "Hardcoded business decision logic",
+    "Multiple database schemas or tables beyond single FilmProject model",
+    "Mock APIs inside frontend code",
+    "Heavy UI component libraries beyond Tailwind and minimal Shadcn usage",
+    "Real AI model integration (only placeholders needed)",
+    "User authentication or authorization systems",
+    "Production deployment configuration",
+    "Actual Next.js or Flask implementation (must use React + Motoko instead)"
+  ],
+  "imageRequirements": {
+    "required": [
+      "Modern gradient background for landing page hero section with film/cinema theme using warm tones (hero-bg.dim_1920x1080.png)",
+      "Simple abstract icon representing film production phases as connected workflow (phases-icon.dim_256x256.png)"
+    ],
+    "edits": []
+  }
+}

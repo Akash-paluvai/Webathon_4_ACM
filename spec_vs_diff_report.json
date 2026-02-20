@@ -1,0 +1,123 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-20T08:57:20.061Z",
+  "summary": "The implementation uses React + Motoko (Internet Computer) architecture instead of the requested Next.js + Flask + Neon PostgreSQL stack. All 7 requirements specified Next.js App Router, Flask backend, and PostgreSQL database, but the diff shows a completely different technology stack with frontend using React/Vite and backend using Motoko (Internet Computer canister).",
+  "missing_requirements": [
+    {
+      "id": "REQ-1",
+      "requirement": "Create Next.js App Router folder structure with landing page (app/page.tsx), project list page (app/projects/page.tsx), project overview page (app/projects/[id]/page.tsx), and phase route shells (app/projects/[id]/phase-[1-8]/page.tsx)",
+      "reason": "No Next.js App Router structure exists. Implementation uses React with TanStack Router instead of Next.js. Files are in src/pages/ rather than app/ directory structure",
+      "evidence": [
+        "frontend/src/App.tsx",
+        "frontend/src/pages/LandingPage.tsx",
+        "frontend/src/pages/ProjectListPage.tsx"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "requirement": "Create Flask backend structure with app initialization (app.py or __init__.py), project routes module (routes/projects.py), eight phase route modules (routes/phase1.py through routes/phase8.py), rules folder for phase-specific business logic (rules/), AI folder with placeholder summarizer (ai/summarizer.py), and database access layer (db/connection.py and db/models.py)",
+      "reason": "No Flask backend exists. Implementation uses Motoko backend (backend/main.mo) for Internet Computer instead of Flask/Python",
+      "evidence": [
+        "backend/main.mo"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Define and implement API contracts in Flask: POST /api/projects, GET /api/projects, GET /api/projects/:id, PUT /api/projects/:id/phase/:phaseNumber, POST /api/projects/:id/insights",
+      "reason": "No Flask REST API endpoints exist. Backend uses Motoko actor methods (createFilmProject, getFilmProject, getAllFilmProjects) instead of HTTP endpoints",
+      "evidence": [
+        "backend/main.mo",
+        "frontend/src/hooks/useQueries.ts"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "Create Neon PostgreSQL schema with single film_project table containing all FilmProject model fields with specific SQL types (UUID, VARCHAR, ENUM, JSONB, TEXT ARRAY, TIMESTAMP)",
+      "reason": "No PostgreSQL schema or SQL migration files exist. Implementation uses Internet Computer canister storage with Motoko type definitions instead of SQL database",
+      "evidence": [
+        "backend/main.mo"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "requirement": "Add comprehensive inline comments throughout frontend and backend code explaining where phase-specific business logic should be added (in rules/ folder), where AI logic will be integrated (in ai/summarizer.py), and architectural boundaries (Next.js never accesses database directly, Flask is the only service that reads/writes to Neon)",
+      "reason": "Comments reference Motoko backend and Internet Computer architecture, not Flask/Neon. No rules/ or ai/ folder structure exists. Comments mention backend actor methods instead of Flask APIs",
+      "evidence": [
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/Phase1Page.tsx",
+        "frontend/src/components/Navigation.tsx"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "requirement": "Implement frontend API client service (lib/api.ts or services/api.ts) that wraps all Flask API calls with proper TypeScript types. Configure Flask backend base URL through environment variable (NEXT_PUBLIC_API_URL)",
+      "reason": "No Flask API client exists. Implementation uses React Query hooks that call Motoko actor methods directly via useActor hook instead of HTTP API calls. No NEXT_PUBLIC_API_URL environment variable configuration",
+      "evidence": [
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/hooks/useActor.ts"
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "requirement": "Create environment configuration files: .env.example for Next.js with NEXT_PUBLIC_API_URL placeholder, .env.example for Flask with DATABASE_URL (Neon connection string), FLASK_ENV, and optional AI_API_KEY placeholder. Include setup instructions in README files for both frontend and backend",
+      "reason": "No .env.example files visible in diff. No Flask or Next.js specific environment configuration. No README files with Flask/Next.js setup instructions visible",
+      "evidence": []
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Internet Identity authentication system with login/logout functionality",
+      "reason": "BuildRequest specifies User authentication or authorization systems as a non-goal. Implementation includes InternetIdentityProvider and useInternetIdentity hook for user authentication",
+      "evidence": [
+        "frontend/src/hooks/useInternetIdentity.ts",
+        "frontend/src/main.tsx"
+      ]
+    },
+    {
+      "description": "Motoko backend implementation with Internet Computer canister storage",
+      "reason": "All requirements specify Flask backend implementation but Motoko backend was implemented instead. While constraints mention Motoko, the requirements themselves explicitly detail Flask structure",
+      "evidence": [
+        "backend/main.mo"
+      ]
+    },
+    {
+      "description": "React with TanStack Router instead of Next.js App Router",
+      "reason": "Requirements specify Next.js App Router structure. Implementation uses React with TanStack Router and different routing structure",
+      "evidence": [
+        "frontend/src/App.tsx"
+      ]
+    }
+  ],
+  "confidence": 0.95,
+  "changed_files": [
+    "all_files_summary.json",
+    "backend/main.mo",
+    "frontend-file-summaries.txt",
+    "frontend/README.md",
+    "frontend/index.css",
+    "frontend/index.html",
+    "frontend/src/App.tsx",
+    "frontend/src/components/CreateProjectDialog.tsx",
+    "frontend/src/components/Navigation.tsx",
+    "frontend/src/hooks/useActor.ts",
+    "frontend/src/hooks/useInternetIdentity.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/index.css",
+    "frontend/src/lib/types.ts",
+    "frontend/src/main.tsx",
+    "frontend/src/pages/LandingPage.tsx",
+    "frontend/src/pages/Phase1Page.tsx",
+    "frontend/src/pages/Phase2Page.tsx",
+    "frontend/src/pages/Phase3Page.tsx",
+    "frontend/src/pages/Phase4Page.tsx",
+    "frontend/src/pages/Phase5Page.tsx",
+    "frontend/src/pages/Phase6Page.tsx",
+    "frontend/src/pages/Phase7Page.tsx",
+    "frontend/src/pages/Phase8Page.tsx",
+    "frontend/src/pages/ProjectListPage.tsx",
+    "frontend/src/pages/ProjectOverviewPage.tsx",
+    "frontend/tailwind.config.js",
+    "project_state.json"
+  ]
+}
