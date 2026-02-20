@@ -298,6 +298,7 @@ export async function getPhase7Timeline(projectId: ProjectId): Promise<any> {
         throw new Error(error.detail || `API error: ${res.status}`);
     }
     return res.json();
+}
 // ── Phase 1: Concept Intelligence ──
 
 export async function analyzePhase1(payload: {
