@@ -9,9 +9,11 @@ import { Separator } from '@/components/ui/separator';
 import {
   ArrowLeft, TrendingUp, TrendingDown, Globe2, Tv, BarChart3,
   Handshake, Zap, Shield, Target, Sparkles, Loader2, AlertCircle,
-  ChevronRight, Gauge, Star, Download, Languages, Activity, PieChart
+  ChevronRight, Gauge, Star, Download, Languages, Activity, PieChart,
+  Calendar, Swords, ArrowLeftRight,
 } from 'lucide-react';
 import { getPhase6Analysis } from '@/api';
+import { ReleaseTimingPanel, CompetitionPanel, SimulationPanel } from '@/components/Phase6Panels';
 
 // Leaflet imports
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
@@ -84,6 +86,8 @@ interface Phase6Data {
   release_mode: string;
   release_probabilities?: Record<string, number>;
   competition?: { cdi: number; genre_density: number; language_density: number; budget_crowd: number; same_genre_count: number; total_competitors: number };
+  competition_intel?: any;
+  release_timing?: any;
   overall_readiness_score: number;
   summary: string;
 }
@@ -591,12 +595,15 @@ export default function Phase6Page() {
       </div>
 
       <Tabs defaultValue="map" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5 h-10">
-          <TabsTrigger value="map" className="flex items-center gap-1.5 text-xs"><Globe2 className="h-3.5 w-3.5" /> Live Map</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 h-10">
+          <TabsTrigger value="map" className="flex items-center gap-1.5 text-xs"><Globe2 className="h-3.5 w-3.5" /> Map</TabsTrigger>
           <TabsTrigger value="regional" className="flex items-center gap-1.5 text-xs"><BarChart3 className="h-3.5 w-3.5" /> Signals</TabsTrigger>
           <TabsTrigger value="platform" className="flex items-center gap-1.5 text-xs"><Tv className="h-3.5 w-3.5" /> Platforms</TabsTrigger>
-          <TabsTrigger value="deals" className="flex items-center gap-1.5 text-xs"><Handshake className="h-3.5 w-3.5" /> Negotiation</TabsTrigger>
+          <TabsTrigger value="timing" className="flex items-center gap-1.5 text-xs"><Calendar className="h-3.5 w-3.5" /> Timing</TabsTrigger>
+          <TabsTrigger value="competition" className="flex items-center gap-1.5 text-xs"><Swords className="h-3.5 w-3.5" /> Competition</TabsTrigger>
+          <TabsTrigger value="deals" className="flex items-center gap-1.5 text-xs"><Handshake className="h-3.5 w-3.5" /> Deals</TabsTrigger>
           <TabsTrigger value="dubbing" className="flex items-center gap-1.5 text-xs"><Languages className="h-3.5 w-3.5" /> Dubbing</TabsTrigger>
+          <TabsTrigger value="simulate" className="flex items-center gap-1.5 text-xs"><ArrowLeftRight className="h-3.5 w-3.5" /> Simulate</TabsTrigger>
         </TabsList>
 
         <TabsContent value="map" className="space-y-4">
@@ -617,6 +624,18 @@ export default function Phase6Page() {
 
         <TabsContent value="deals">
           <NegotiationDashboard leverage={data.leverage} dealOptions={data.deal.deal_options} negotiationLeverage={data.deal.negotiation_leverage} benchmarks={data.deal.benchmarks || []} />
+        </TabsContent>
+
+        <TabsContent value="timing" className="space-y-4">
+          {data.release_timing ? <ReleaseTimingPanel timing={data.release_timing} /> : <Card><CardContent className="py-8 text-center text-muted-foreground">Release timing data not available.</CardContent></Card>}
+        </TabsContent>
+
+        <TabsContent value="competition" className="space-y-4">
+          {data.competition_intel ? <CompetitionPanel intel={data.competition_intel} /> : <Card><CardContent className="py-8 text-center text-muted-foreground">Competition data not available.</CardContent></Card>}
+        </TabsContent>
+
+        <TabsContent value="simulate" className="space-y-4">
+          {data.release_timing ? <SimulationPanel projectId={data.project_id} bestMonth={data.release_timing.best_month} timing={data.release_timing} /> : <Card><CardContent className="py-8 text-center text-muted-foreground">Simulation requires release timing data.</CardContent></Card>}
         </TabsContent>
 
         <TabsContent value="dubbing" className="space-y-4">

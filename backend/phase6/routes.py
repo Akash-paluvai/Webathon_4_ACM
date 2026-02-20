@@ -42,6 +42,9 @@ from phase6.services.deal_engine import compute_negotiation_leverage, generate_d
 from phase6.services.release_classifier import classify_release_mode, classify_release_mode_with_probabilities
 from phase6.services.leverage_engine import compute_leverage, compute_dubbing_expansion_potential
 from phase6.services.competition_density import compute_cdi, cdi_penalty
+from phase6.services.competition_engine import compute_competition_intel
+from phase6.services.release_timing_engine import compute_release_scores, simulate_release_shift
+from phase6.services.calendar_engine import get_festival_calendar, get_monthly_engagement_index
 from phase6.services.pitch_pack import generate_pitch_pack
 from phase6.ml.feature_builder import build_feature_vector
 from phase6.ml.model_loader import predict, rule_based_readiness
@@ -102,6 +105,12 @@ def _run_full_pipeline(project: FilmProject, db: Session) -> dict:
         budget_level=project.budget_level, db=db,
     )
 
+    # Competition Intelligence (full)
+    competition_intel = compute_competition_intel(
+        genre=project.genre, language=project.language,
+        budget_level=project.budget_level, db=db,
+    )
+
     # Layer 2: Regional hype (signal-enhanced)
     raw_regions = compute_regional_interest_with_signals(
         signals=signals, language=project.language,
@@ -126,12 +135,23 @@ def _run_full_pipeline(project: FilmProject, db: Session) -> dict:
         distribution_confidence=project.distribution_confidence,
     )
 
-    # Layer 3: Leverage
+    # Release Timing
+    release_timing = compute_release_scores(
+        genre=project.genre,
+        language=project.language,
+        target_regions=[s["region"] for s in normalized_regions[:3]],
+        hype_momentum=hype_momentum,
+        competition_by_month=competition_intel.get("competition_by_month"),
+    )
+    release_strength = release_timing.get("best_score", 0.5)
+
+    # Layer 3: Leverage (now includes release_strength)
     dubbing_potential = compute_dubbing_expansion_potential(dubbing_result)
     regional_dominance = top_region.get("normalized_score", 0.5)
     leverage_result = compute_leverage(
         platform_fit_score=top["fit_score"], hype_momentum=hype_momentum,
         regional_dominance=regional_dominance, dubbing_expansion_potential=dubbing_potential,
+        release_strength=release_strength,
     )
 
     # Release mode with probabilities
@@ -164,6 +184,9 @@ def _run_full_pipeline(project: FilmProject, db: Session) -> dict:
         "top_regions": top_regions,
         "hype_momentum": hype_momentum,
         "cdi_result": cdi_result,
+        "competition_intel": competition_intel,
+        "release_timing": release_timing,
+        "release_strength": release_strength,
         "normalized_regions": normalized_regions,
         "top_region": top_region,
         "ranked": ranked,
@@ -496,6 +519,55 @@ def full_analysis_endpoint(project_id: int, db: Session = Depends(get_db)):
         release_mode=release_mode,
         release_probabilities=release_result["probabilities"],
         competition=pipeline["cdi_result"],
+        competition_intel=pipeline.get("competition_intel"),
+        release_timing=pipeline.get("release_timing"),
         overall_readiness_score=readiness,
         summary=summary,
     )
+
+
+# ── Release Timing ────────────────────────────────────────────
+
+@router.post("/release-timing")
+def release_timing_endpoint(project_id: int, db: Session = Depends(get_db)):
+    project = _get_project(project_id, db)
+    pipeline = _run_full_pipeline(project, db)
+    return {
+        "project_id": project.id,
+        **pipeline["release_timing"],
+    }
+
+
+# ── Competition Intelligence ──────────────────────────────────
+
+@router.post("/competition-intel")
+def competition_intel_endpoint(project_id: int, db: Session = Depends(get_db)):
+    project = _get_project(project_id, db)
+    pipeline = _run_full_pipeline(project, db)
+    return {
+        "project_id": project.id,
+        **pipeline["competition_intel"],
+    }
+
+
+# ── Simulate Release Shift ────────────────────────────────────
+
+@router.post("/simulate-release")
+def simulate_release_endpoint(
+    project_id: int,
+    current_month: int,
+    new_month: int,
+    db: Session = Depends(get_db),
+):
+    project = _get_project(project_id, db)
+    pipeline = _run_full_pipeline(project, db)
+
+    result = simulate_release_shift(
+        current_month=current_month,
+        new_month=new_month,
+        genre=project.genre,
+        target_regions=[s["region"] for s in pipeline["normalized_regions"][:3]],
+        hype_momentum=pipeline["hype_momentum"],
+        competition_by_month=pipeline["competition_intel"].get("competition_by_month"),
+    )
+    return {"project_id": project.id, **result}

@@ -64,6 +64,7 @@ def compute_leverage(
     hype_momentum: float,
     regional_dominance: float,
     dubbing_expansion_potential: float,
+    release_strength: float = 0.5,
 ) -> Dict:
     """
     Compute Negotiation Leverage Score.
@@ -73,16 +74,18 @@ def compute_leverage(
         hype_momentum: Aggregate hype from top-3 region signals (0-1).
         regional_dominance: Normalized score of the top region (0-1).
         dubbing_expansion_potential: Proportion of high/medium dubbing recommendations (0-1).
+        release_strength: Best release window score (0-1) from release timing engine.
 
     Returns:
         {leverage_score, level, strategy_hint, breakdown}
     """
-    # Weighted formula
+    # Updated weighted formula (includes release strength)
     leverage = (
-        0.40 * platform_fit_score
-        + 0.25 * hype_momentum
-        + 0.20 * regional_dominance
+        0.35 * platform_fit_score
+        + 0.20 * hype_momentum
+        + 0.15 * regional_dominance
         + 0.15 * dubbing_expansion_potential
+        + 0.15 * release_strength
     )
     leverage = round(min(1.0, max(0.0, leverage)), 4)
 
@@ -94,10 +97,11 @@ def compute_leverage(
         "level": level,
         "strategy_hint": strategy,
         "breakdown": {
-            "platform_fit_contribution": round(0.40 * platform_fit_score, 4),
-            "hype_momentum_contribution": round(0.25 * hype_momentum, 4),
-            "regional_dominance_contribution": round(0.20 * regional_dominance, 4),
+            "platform_fit_contribution": round(0.35 * platform_fit_score, 4),
+            "hype_momentum_contribution": round(0.20 * hype_momentum, 4),
+            "regional_dominance_contribution": round(0.15 * regional_dominance, 4),
             "dubbing_expansion_contribution": round(0.15 * dubbing_expansion_potential, 4),
+            "release_strength_contribution": round(0.15 * release_strength, 4),
         },
     }
 

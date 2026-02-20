@@ -99,6 +99,7 @@ class LeverageBreakdown(BaseModel):
     hype_momentum_contribution: float
     regional_dominance_contribution: float
     dubbing_expansion_contribution: float
+    release_strength_contribution: Optional[float] = None
 
 
 class LeverageResponse(BaseModel):
@@ -145,6 +146,8 @@ class Phase6AnalysisResponse(BaseModel):
     )
     release_probabilities: Optional[Dict[str, float]] = None
     competition: Optional[Dict] = None
+    competition_intel: Optional[Dict] = None
+    release_timing: Optional[Dict] = None
     overall_readiness_score: float = Field(..., ge=0, le=1)
     summary: str
 
