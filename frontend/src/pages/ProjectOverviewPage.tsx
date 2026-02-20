@@ -16,7 +16,7 @@ import { useGetProject } from '@/hooks/useQueries';
 export default function ProjectOverviewPage() {
   const navigate = useNavigate();
   const { projectId } = useParams({ strict: false }) as { projectId: string };
-  const { data: project, isLoading } = useGetProject(BigInt(projectId));
+  const { data: project, isLoading } = useGetProject(Number(projectId));
 
   const phases = [
     { number: 1, name: 'Script Selection & Concept Evaluation', path: `/projects/${projectId}/phase-1` },

@@ -1,58 +1,47 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import type { FilmProject, ProjectId, Scale, TalentStrategy, AudienceType, MarketingBudgetLevel, PrimaryMarketingChannel, ReleaseModel, DistributionConfidence } from '@/backend';
-import type { BudgetLevel } from '@/lib/types';
+import * as api from '../api';
+import type {
+  FilmProject,
+  ProjectId,
+  Scale,
+  BudgetLevel,
+  TalentStrategy,
+  AudienceType,
+  MarketingBudgetLevel,
+  PrimaryMarketingChannel,
+  ReleaseModel,
+  DistributionConfidence,
+} from '../types';
 
 /**
  * React Query Hooks for Backend Integration
- * 
- * ARCHITECTURE NOTE:
- * - All backend operations go through these hooks
- * - Frontend NEVER accesses Internet Computer storage directly
- * - All data operations use the Motoko backend actor
- * - These hooks manage data invalidation and caching
- * 
- * DO NOT:
- * - Add database access logic here
- * - Create mock data or placeholder APIs
- * - Mix business logic with data fetching
+ *
+ * All backend operations go through these hooks using the REST API client.
  */
 
 // Get all film projects
 export function useGetAllProjects() {
-  const { actor, isFetching } = useActor();
-
   return useQuery<FilmProject[]>({
     queryKey: ['projects'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getAllFilmProjects();
-    },
-    enabled: !!actor && !isFetching,
+    queryFn: () => api.getAllProjects(),
   });
 }
 
 // Get single film project
 export function useGetProject(projectId: ProjectId) {
-  const { actor, isFetching } = useActor();
-
   return useQuery<FilmProject | null>({
-    queryKey: ['project', projectId.toString()],
-    queryFn: async () => {
-      if (!actor) return null;
-      return actor.getFilmProject(projectId);
-    },
-    enabled: !!actor && !isFetching && !!projectId,
+    queryKey: ['project', String(projectId)],
+    queryFn: () => api.getProject(projectId),
+    enabled: !!projectId,
   });
 }
 
 // Create new film project
 export function useCreateProject() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: {
+    mutationFn: (data: {
       title: string;
       genre: string;
       language: string;
@@ -60,31 +49,13 @@ export function useCreateProject() {
       scale: Scale;
       budgetLevel: BudgetLevel;
       talentStrategy: TalentStrategy;
-      plannedShootDays: bigint;
+      plannedShootDays: number;
       audienceType: AudienceType;
       marketingBudgetLevel: MarketingBudgetLevel;
       primaryMarketingChannel: PrimaryMarketingChannel;
       releaseModel: ReleaseModel;
       distributionConfidence: DistributionConfidence;
-    }) => {
-      if (!actor) throw new Error('Actor not initialized');
-      
-      return actor.createFilmProject(
-        data.title,
-        data.genre,
-        data.language,
-        data.theme,
-        data.scale,
-        data.budgetLevel as any,
-        data.talentStrategy,
-        data.plannedShootDays,
-        data.audienceType,
-        data.marketingBudgetLevel,
-        data.primaryMarketingChannel,
-        data.releaseModel,
-        data.distributionConfidence
-      );
-    },
+    }) => api.createProject(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
@@ -93,16 +64,13 @@ export function useCreateProject() {
 
 // Update film project phase
 export function useUpdateProjectPhase() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { projectId: ProjectId; newPhase: bigint }) => {
-      if (!actor) throw new Error('Actor not initialized');
-      return actor.updateFilmProjectPhase(data.projectId, data.newPhase);
-    },
+    mutationFn: (data: { projectId: ProjectId; newPhase: number }) =>
+      api.updateProjectPhase(data.projectId, data.newPhase),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['project', variables.projectId.toString()] });
+      queryClient.invalidateQueries({ queryKey: ['project', String(variables.projectId)] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });
@@ -110,31 +78,23 @@ export function useUpdateProjectPhase() {
 
 // Add project insight
 export function useAddProjectInsight() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { projectId: ProjectId; content: string }) => {
-      if (!actor) throw new Error('Actor not initialized');
-      return actor.addProjectInsight(data.projectId, data.content);
-    },
+    mutationFn: (data: { projectId: ProjectId; content: string }) =>
+      api.addProjectInsight(data.projectId, data.content),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['project', variables.projectId.toString()] });
-      queryClient.invalidateQueries({ queryKey: ['insights', variables.projectId.toString()] });
+      queryClient.invalidateQueries({ queryKey: ['project', String(variables.projectId)] });
+      queryClient.invalidateQueries({ queryKey: ['insights', String(variables.projectId)] });
     },
   });
 }
 
 // Get project insights
 export function useGetProjectInsights(projectId: ProjectId) {
-  const { actor, isFetching } = useActor();
-
   return useQuery({
-    queryKey: ['insights', projectId.toString()],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getProjectInsights(projectId);
-    },
-    enabled: !!actor && !isFetching && !!projectId,
+    queryKey: ['insights', String(projectId)],
+    queryFn: () => api.getProjectInsights(projectId),
+    enabled: !!projectId,
   });
 }

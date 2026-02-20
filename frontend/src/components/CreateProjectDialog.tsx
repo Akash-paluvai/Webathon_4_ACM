@@ -14,8 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateProject } from '@/hooks/useQueries';
-import { Scale, TalentStrategy, AudienceType, MarketingBudgetLevel, PrimaryMarketingChannel, ReleaseModel, DistributionConfidence } from '@/backend';
-import type { BudgetLevel } from '@/lib/types';
+import { Scale, TalentStrategy, AudienceType, MarketingBudgetLevel, PrimaryMarketingChannel, ReleaseModel, DistributionConfidence } from '@/types';
+import type { BudgetLevel } from '@/types';
 
 interface CreateProjectDialogProps {
   open: boolean;
@@ -51,7 +51,7 @@ export default function CreateProjectDialog({ open, onOpenChange }: CreateProjec
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const projectId = await createProject.mutateAsync({
         title: formData.title,
@@ -61,7 +61,7 @@ export default function CreateProjectDialog({ open, onOpenChange }: CreateProjec
         scale: formData.scale,
         budgetLevel: formData.budgetLevel,
         talentStrategy: formData.talentStrategy,
-        plannedShootDays: BigInt(formData.plannedShootDays),
+        plannedShootDays: parseInt(formData.plannedShootDays, 10),
         audienceType: formData.audienceType,
         marketingBudgetLevel: formData.marketingBudgetLevel,
         primaryMarketingChannel: formData.primaryMarketingChannel,
@@ -71,7 +71,7 @@ export default function CreateProjectDialog({ open, onOpenChange }: CreateProjec
 
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       onOpenChange(false);
-      navigate({ to: '/projects/$projectId', params: { projectId: projectId.toString() } });
+      navigate({ to: '/projects/$projectId', params: { projectId: String(projectId.id) } });
     } catch (error) {
       console.error('Failed to create project:', error);
     }

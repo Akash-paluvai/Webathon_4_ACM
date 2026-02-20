@@ -7,8 +7,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Film } from 'lucide-react';
 import { useGetAllProjects } from '@/hooks/useQueries';
 import CreateProjectDialog from '@/components/CreateProjectDialog';
-import { Scale } from '@/backend';
-import type { BudgetLevel } from '@/lib/types';
+import { Scale } from '@/types';
+import type { BudgetLevel } from '@/types';
 
 /**
  * Project List Page
