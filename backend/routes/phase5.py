@@ -61,4 +61,8 @@ def run_phase5(
         "marketingRisk": result["marketingRisk"],
         "riskFlags": result["riskFlags"],
         "explanation": result["explanation"],
+        "alternativeScenarios": result["alternativeScenarios"],
+        "diminishingReturnsInsight": result["diminishingReturnsInsight"],
+        "riskDecomposition": result["riskDecomposition"],
+        "channelDeprioritization": result["channelDeprioritization"],
     }

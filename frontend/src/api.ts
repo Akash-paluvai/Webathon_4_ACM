@@ -175,6 +175,19 @@ export interface Phase5Result {
     marketingRisk: string;
     riskFlags: string[];
     explanation: string;
+    alternativeScenarios: {
+        name: string;
+        budgetAllocation: Record<string, number>;
+        discoverabilityScore: number;
+        risk: string;
+    }[];
+    diminishingReturnsInsight: string;
+    riskDecomposition: {
+        budgetRisk: string;
+        audienceFitRisk: string;
+        channelConcentrationRisk: string;
+    };
+    channelDeprioritization: string;
 }
 
 export async function submitPhase5(
@@ -185,4 +198,28 @@ export async function submitPhase5(
         method: 'POST',
         body: JSON.stringify({ marketingBudgetLevel }),
     });
+}
+
+// ── Trending Creators API ──
+
+export interface TrendingCreator {
+    name: string;
+    platform: string;
+    thumbnailUrl: string;
+    activityScore: number;
+    category: string;
+    reason: string;
+}
+
+export async function fetchTrendingCreators(
+    genre?: string,
+    region?: string
+): Promise<{ creators: TrendingCreator[] }> {
+    const params = new URLSearchParams();
+    if (genre) params.set('genre', genre);
+    if (region) params.set('region', region);
+    const qs = params.toString();
+    return request<{ creators: TrendingCreator[] }>(
+        `/marketing/trending-creators${qs ? `?${qs}` : ''}`
+    );
 }

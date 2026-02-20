@@ -1,23 +1,18 @@
 /**
  * PHASE 5 — Marketing Strategy Planning
  *
- * Inputs (user):
- *   - marketingBudgetLevel: LOW | MEDIUM | HIGH
+ * Two-column layout:
+ *   LEFT:  Campaign config, optimized plan, comparative scenarios,
+ *          strategic insights, risk flags
+ *   RIGHT: Prominent Public Figures sidebar
  *
- * Reads from FilmProject:
- *   - audienceType, audienceInterestScore (via Phase 4)
- *   - scale, budgetLevel
- *
- * Persists:
- *   - marketingBudgetLevel
- *   - primaryMarketingChannel
- *
- * Returned in response only (NOT persisted):
- *   - budgetAllocation, discoverabilityScore, marketingRisk,
- *     riskFlags, explanation
+ * Persists: marketingBudgetLevel, primaryMarketingChannel
+ * Response-only: budgetAllocation, discoverabilityScore, marketingRisk,
+ *   riskFlags, explanation, alternativeScenarios, diminishingReturnsInsight,
+ *   riskDecomposition, channelDeprioritization
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,28 +21,38 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Megaphone, BarChart3, AlertTriangle, Loader2, ShieldAlert, TrendingUp } from 'lucide-react';
-import { submitPhase5 } from '@/api';
-import type { Phase5Result } from '@/api';
+import {
+  ArrowLeft, Megaphone, BarChart3, AlertTriangle, Loader2,
+  ShieldAlert, TrendingUp, Info, Lightbulb, Users,
+} from 'lucide-react';
+import { submitPhase5, fetchTrendingCreators } from '@/api';
+import type { Phase5Result, TrendingCreator } from '@/api';
 
 export default function Phase5Page() {
   const navigate = useNavigate();
   const { projectId } = useParams({ strict: false }) as { projectId: string };
 
-  // ── Form state ──
   const [budgetLevel, setBudgetLevel] = useState<string>('');
-
-  // ── Submission state ──
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<Phase5Result | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [creators, setCreators] = useState<TrendingCreator[]>([]);
+  const [creatorsLoading, setCreatorsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!result) return;
+    setCreatorsLoading(true);
+    fetchTrendingCreators()
+      .then((res) => setCreators(res.creators))
+      .catch(() => setCreators([]))
+      .finally(() => setCreatorsLoading(false));
+  }, [result]);
 
   const handleSubmit = async () => {
     if (!budgetLevel) return;
     setSubmitting(true);
     setError(null);
     setResult(null);
-
     try {
       const res = await submitPhase5(Number(projectId), budgetLevel);
       setResult(res);
@@ -93,8 +98,89 @@ export default function Phase5Page() {
     }
   };
 
+  const categoryVariant = (cat: string) => {
+    switch (cat) {
+      case 'Actor': return 'default' as const;
+      case 'Musician': return 'secondary' as const;
+      case 'Motivational Figure': return 'outline' as const;
+      default: return 'outline' as const;
+    }
+  };
+
+  /* ─── Right sidebar content ─── */
+  const renderSidebar = () => (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Prominent Indian Film Actors for Promotion
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Curated actors validated via public YouTube activity
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {creatorsLoading ? (
+            <div className="flex items-center justify-center py-6 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <span className="text-xs">Loading…</span>
+            </div>
+          ) : creators.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-4 text-center">
+              No actors available at this time.
+            </p>
+          ) : (
+            <>
+              {creators.map((creator, idx) => (
+                <div key={idx} className="border rounded-lg overflow-hidden">
+                  {/* Thumbnail */}
+                  <div className="relative aspect-video bg-muted">
+                    <img
+                      src={creator.thumbnailUrl}
+                      alt={`Recent YouTube content featuring ${creator.name}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        if (target.parentElement) {
+                          target.parentElement.classList.add('flex', 'items-center', 'justify-center');
+                          const fallback = document.createElement('span');
+                          fallback.textContent = creator.name.charAt(0);
+                          fallback.className = 'text-2xl font-bold text-muted-foreground';
+                          target.parentElement.appendChild(fallback);
+                        }
+                      }}
+                    />
+                  </div>
+                  {/* Info */}
+                  <div className="p-2.5 space-y-1.5">
+                    <div className="flex items-start justify-between gap-1">
+                      <p className="font-medium text-xs leading-tight">{creator.name}</p>
+                      <span className="text-xs font-semibold text-muted-foreground shrink-0">
+                        {creator.activityScore}/100
+                      </span>
+                    </div>
+                    <Badge variant="default" className="text-[10px] px-1.5 py-0">
+                      {creator.category}
+                    </Badge>
+                    <p className="text-[11px] text-muted-foreground leading-snug">{creator.reason}</p>
+                  </div>
+                </div>
+              ))}
+              <p className="text-[10px] text-muted-foreground text-center pt-2 leading-tight">
+                Actors are selected from a curated list and validated
+                using public YouTube activity.
+              </p>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
       <Button
         variant="ghost"
         onClick={() => navigate({ to: '/projects/$projectId', params: { projectId } })}
@@ -111,165 +197,270 @@ export default function Phase5Page() {
         </p>
       </div>
 
-      {/* ── Budget Input Card ── */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Megaphone className="h-5 w-5" />
-            Campaign Configuration
-          </CardTitle>
-          <CardDescription>
-            Select a marketing budget level to generate an optimised channel allocation
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="budget-level">Marketing Budget Level</Label>
-            <Select value={budgetLevel} onValueChange={setBudgetLevel}>
-              <SelectTrigger id="budget-level">
-                <SelectValue placeholder="Select budget level…" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="LOW">Low Budget</SelectItem>
-                <SelectItem value="MEDIUM">Medium Budget</SelectItem>
-                <SelectItem value="HIGH">High Budget</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      {/* ─── Two-column layout when results exist ─── */}
+      <div className={result ? 'grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6' : ''}>
 
-          <Button
-            className="w-full"
-            disabled={!budgetLevel || submitting}
-            onClick={handleSubmit}
-          >
-            {submitting ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Generating Plan…
-              </>
-            ) : (
-              <>
-                <TrendingUp className="h-4 w-4 mr-2" />
-                Generate Marketing Plan
-              </>
-            )}
-          </Button>
+        {/* ═══ LEFT COLUMN — primary content ═══ */}
+        <div className="space-y-6">
 
-          {error && (
-            <div className="flex items-center gap-2 text-sm text-destructive mt-2">
-              <AlertTriangle className="h-4 w-4" />
-              {error}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* ── Results ── */}
-      {result && (
-        <>
-          {/* Key Metrics */}
-          <Card className="mb-6">
+          {/* Campaign Configuration */}
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                Marketing Plan
+                <Megaphone className="h-5 w-5" />
+                Campaign Configuration
               </CardTitle>
+              <CardDescription>
+                Select a marketing budget level to generate an optimised channel allocation
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Metrics Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Primary Channel</p>
-                  <Badge variant="default" className="text-sm">
-                    {channelLabel(result.primaryMarketingChannel)}
-                  </Badge>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Marketing Risk</p>
-                  <Badge variant={riskBadgeVariant(result.marketingRisk)} className="text-sm">
-                    {result.marketingRisk}
-                  </Badge>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Discoverability</p>
-                  <p className={`text-2xl font-bold ${scoreColor(result.discoverabilityScore)}`}>
-                    {result.discoverabilityScore}
-                    <span className="text-sm font-normal text-muted-foreground">/100</span>
-                  </p>
-                </div>
-              </div>
-
-              {/* Discoverability Bar */}
+            <CardContent className="space-y-5">
               <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Simulated Discoverability</span>
-                  <span className={scoreColor(result.discoverabilityScore)}>
-                    {result.discoverabilityScore}%
-                  </span>
+                <Label htmlFor="budget-level">Marketing Budget Level</Label>
+                <Select value={budgetLevel} onValueChange={setBudgetLevel}>
+                  <SelectTrigger id="budget-level">
+                    <SelectValue placeholder="Select budget level…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="LOW">Low Budget</SelectItem>
+                    <SelectItem value="MEDIUM">Medium Budget</SelectItem>
+                    <SelectItem value="HIGH">High Budget</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                className="w-full"
+                disabled={!budgetLevel || submitting}
+                onClick={handleSubmit}
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Generating Plan…
+                  </>
+                ) : (
+                  <>
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    Generate Marketing Plan
+                  </>
+                )}
+              </Button>
+              {error && (
+                <div className="flex items-center gap-2 text-sm text-destructive mt-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  {error}
                 </div>
-                <Progress value={result.discoverabilityScore} className="h-2" />
-              </div>
-
-              <Separator />
-
-              {/* Budget Allocation */}
-              <div>
-                <p className="text-sm font-medium mb-3">Budget Allocation by Channel</p>
-                <div className="space-y-3">
-                  {Object.entries(result.budgetAllocation)
-                    .sort(([, a], [, b]) => b - a)
-                    .map(([channel, pct]) => (
-                      <div key={channel} className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                          <span>{channelLabel(channel)}</span>
-                          <span className="font-semibold">{pct}%</span>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-2.5">
-                          <div
-                            className={`h-2.5 rounded-full ${channelColor(channel)}`}
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Explanation */}
-              <div className="bg-muted/50 rounded-lg p-4">
-                <p className="text-sm leading-relaxed">{result.explanation}</p>
-              </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Risk Flags */}
-          {result.riskFlags.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ShieldAlert className="h-5 w-5" />
-                  Risk Flags
-                </CardTitle>
-                <CardDescription>
-                  Issues that may impact campaign effectiveness
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3">
-                  {result.riskFlags.map((flag, idx) => (
-                    <li key={idx} className="flex gap-3 items-start">
-                      <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm">{flag}</p>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
+          {/* ─── Results ─── */}
+          {result && (
+            <>
+              {/* Optimized Plan */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Optimized Plan
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Metrics Row */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Primary Channel</p>
+                      <Badge variant="default" className="text-sm">
+                        {channelLabel(result.primaryMarketingChannel)}
+                      </Badge>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Marketing Risk</p>
+                      <Badge variant={riskBadgeVariant(result.marketingRisk)} className="text-sm">
+                        {result.marketingRisk}
+                      </Badge>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Discoverability</p>
+                      <p className={`text-2xl font-bold ${scoreColor(result.discoverabilityScore)}`}>
+                        {result.discoverabilityScore}
+                        <span className="text-sm font-normal text-muted-foreground">/100</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Discoverability Bar */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Simulated Discoverability</span>
+                      <span className={scoreColor(result.discoverabilityScore)}>
+                        {result.discoverabilityScore}%
+                      </span>
+                    </div>
+                    <Progress value={result.discoverabilityScore} className="h-2" />
+                  </div>
+
+                  <Separator />
+
+                  {/* Budget Allocation */}
+                  <div>
+                    <p className="text-sm font-medium mb-3">Budget Allocation by Channel</p>
+                    <div className="space-y-3">
+                      {Object.entries(result.budgetAllocation)
+                        .sort(([, a], [, b]) => b - a)
+                        .map(([channel, pct]) => (
+                          <div key={channel} className="space-y-1">
+                            <div className="flex justify-between text-sm">
+                              <span>{channelLabel(channel)}</span>
+                              <span className="font-semibold">{pct}%</span>
+                            </div>
+                            <div className="w-full bg-muted rounded-full h-2.5">
+                              <div
+                                className={`h-2.5 rounded-full ${channelColor(channel)}`}
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Risk Decomposition */}
+                  <div>
+                    <p className="text-sm font-medium mb-3">Risk Decomposition</p>
+                    <div className="flex flex-wrap gap-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground">Budget</span>
+                        <Badge variant={riskBadgeVariant(result.riskDecomposition.budgetRisk)} className="text-xs">
+                          {result.riskDecomposition.budgetRisk}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground">Audience Fit</span>
+                        <Badge variant={riskBadgeVariant(result.riskDecomposition.audienceFitRisk)} className="text-xs">
+                          {result.riskDecomposition.audienceFitRisk}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground">Concentration</span>
+                        <Badge variant={riskBadgeVariant(result.riskDecomposition.channelConcentrationRisk)} className="text-xs">
+                          {result.riskDecomposition.channelConcentrationRisk}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Explanation */}
+                  <div className="bg-muted/50 rounded-lg p-4">
+                    <p className="text-sm leading-relaxed">{result.explanation}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Comparative Scenarios */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Lightbulb className="h-5 w-5" />
+                    Comparative Scenarios
+                  </CardTitle>
+                  <CardDescription>
+                    Budget-constrained trade-offs across alternative allocation strategies
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {result.alternativeScenarios.map((scenario) => (
+                      <div key={scenario.name} className="border rounded-lg p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-sm">{scenario.name}</p>
+                          <Badge variant={riskBadgeVariant(scenario.risk)} className="text-xs">
+                            {scenario.risk} Risk
+                          </Badge>
+                        </div>
+                        <div className="flex items-baseline gap-1">
+                          <span className={`text-xl font-bold ${scoreColor(scenario.discoverabilityScore)}`}>
+                            {scenario.discoverabilityScore}
+                          </span>
+                          <span className="text-xs text-muted-foreground">/100 discoverability</span>
+                        </div>
+                        <div className="space-y-1.5">
+                          {Object.entries(scenario.budgetAllocation)
+                            .sort(([, a], [, b]) => b - a)
+                            .map(([ch, pct]) => (
+                              <div key={ch} className="flex items-center gap-2 text-xs">
+                                <div className={`w-2 h-2 rounded-full ${channelColor(ch)}`} />
+                                <span className="text-muted-foreground flex-1">{channelLabel(ch)}</span>
+                                <span className="font-medium">{pct}%</span>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Strategic Insights */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Info className="h-5 w-5" />
+                    Strategic Insights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="bg-muted/50 rounded-lg p-4 space-y-1">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Marginal Efficiency
+                    </p>
+                    <p className="text-sm leading-relaxed">{result.diminishingReturnsInsight}</p>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-4 space-y-1">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Channel Trade-Off
+                    </p>
+                    <p className="text-sm leading-relaxed">{result.channelDeprioritization}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Risk Flags */}
+              {result.riskFlags.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ShieldAlert className="h-5 w-5" />
+                      Risk Flags
+                    </CardTitle>
+                    <CardDescription>
+                      Issues that may impact campaign effectiveness
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-3">
+                      {result.riskFlags.map((flag, idx) => (
+                        <li key={idx} className="flex gap-3 items-start">
+                          <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                          <p className="text-sm">{flag}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
+            </>
           )}
-        </>
-      )}
+        </div>
+
+        {/* ═══ RIGHT COLUMN — public figures sidebar ═══ */}
+        {result && renderSidebar()}
+
+      </div>
     </div>
   );
 }

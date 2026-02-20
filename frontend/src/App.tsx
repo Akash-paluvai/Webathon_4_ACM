@@ -24,17 +24,7 @@ function Layout() {
       <footer className="border-t border-border bg-card py-6 mt-auto">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
           <p>
-            © {new Date().getFullYear()} FilmFlow Studio. Built with love using{' '}
-            <a
-              href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(
-                typeof window !== 'undefined' ? window.location.hostname : 'filmflow-studio'
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              caffeine.ai
-            </a>
+            © 2026 Webathon 4.0. All rights reserved.
           </p>
         </div>
       </footer>
