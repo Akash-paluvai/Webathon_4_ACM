@@ -149,6 +149,12 @@ export async function submitPhase4(
     return res.json();
 }
 
+export interface AIInsights {
+    marketRead: string;
+    riskSignals: string;
+    strategicRecommendations: string;
+}
+
 export async function generatePhase4Insights(
     projectId: ProjectId,
     data: {
@@ -157,8 +163,8 @@ export async function generatePhase4Insights(
         testStrategy: string;
         trailerFeatures: Record<string, unknown>;
     }
-): Promise<{ insights: string[] }> {
-    return request<{ insights: string[] }>(`/projects/${projectId}/phase/4/insights`, {
+): Promise<AIInsights> {
+    return request<AIInsights>(`/projects/${projectId}/phase/4/insights`, {
         method: 'POST',
         body: JSON.stringify(data),
     });
@@ -188,6 +194,22 @@ export interface Phase5Result {
         channelConcentrationRisk: string;
     };
     channelDeprioritization: string;
+    decisionRationale: {
+        audience: string;
+        budget: string;
+        channelReason: string;
+        riskReason: string;
+        interestContext: string;
+        primaryAllocation: string;
+    };
+}
+
+export interface ScenarioResult {
+    discoverability: number;
+    delta: number;
+    primaryChannel: string;
+    budgetAllocation: Record<string, number>;
+    marketingRisk: string;
 }
 
 export async function submitPhase5(
@@ -197,6 +219,22 @@ export async function submitPhase5(
     return request<Phase5Result>(`/projects/${projectId}/phase/5`, {
         method: 'POST',
         body: JSON.stringify({ marketingBudgetLevel }),
+    });
+}
+
+export async function simulateScenario(
+    projectId: ProjectId,
+    baselineMarketingBudgetLevel: string,
+    audienceType?: string,
+    marketingBudgetLevel?: string,
+): Promise<{ scenarioResult: ScenarioResult }> {
+    return request<{ scenarioResult: ScenarioResult }>(`/projects/${projectId}/phase/5/scenario`, {
+        method: 'POST',
+        body: JSON.stringify({
+            baselineMarketingBudgetLevel,
+            audienceType: audienceType || undefined,
+            marketingBudgetLevel: marketingBudgetLevel || undefined,
+        }),
     });
 }
 

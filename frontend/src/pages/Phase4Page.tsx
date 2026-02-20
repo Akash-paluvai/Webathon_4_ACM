@@ -32,7 +32,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Upload, Sparkles, Film, BarChart3, AlertTriangle, Loader2 } from 'lucide-react';
 import { submitPhase4, generatePhase4Insights } from '@/api';
-import type { Phase4Result } from '@/api';
+import type { Phase4Result, AIInsights } from '@/api';
 
 export default function Phase4Page() {
   const navigate = useNavigate();
@@ -49,7 +49,7 @@ export default function Phase4Page() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // ── Insight state ──
-  const [insights, setInsights] = useState<string[]>([]);
+  const [insights, setInsights] = useState<AIInsights | null>(null);
   const [insightsLoading, setInsightsLoading] = useState(false);
   const [insightsError, setInsightsError] = useState<string | null>(null);
 
@@ -65,7 +65,7 @@ export default function Phase4Page() {
     setSubmitting(true);
     setSubmitError(null);
     setResult(null);
-    setInsights([]);
+    setInsights(null);
     setInsightsError(null);
 
     try {
@@ -90,7 +90,7 @@ export default function Phase4Page() {
         testStrategy: result.testStrategy,
         trailerFeatures: result.trailerFeatures,
       });
-      setInsights(res.insights);
+      setInsights(res);
     } catch (err: unknown) {
       setInsightsError(err instanceof Error ? err.message : 'Insight generation failed');
     } finally {
@@ -327,29 +327,48 @@ export default function Phase4Page() {
         </Card>
       )}
 
-      {/* ── Insights Card ── */}
-      {insights.length > 0 && (
+      {/* ── AI-Generated Insights Card ── */}
+      {insights && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5" />
-              Strategic Insights
+              AI-Generated Strategic Insights
             </CardTitle>
             <CardDescription>
-              Rule-based analysis of trailer features, audience fit, and strategy alignment
+              Powered by Cerebras AI — based on trailer analysis data and audience context
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <ul className="space-y-4">
-              {insights.map((insight, idx) => (
-                <li key={idx} className="flex gap-3">
-                  <span className="flex-shrink-0 flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold">
-                    {idx + 1}
-                  </span>
-                  <p className="text-sm leading-relaxed">{insight}</p>
-                </li>
-              ))}
-            </ul>
+          <CardContent className="space-y-5">
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-blue-500" />
+                Market Read
+              </h4>
+              <p className="text-sm leading-relaxed text-muted-foreground pl-6">
+                {insights.marketRead}
+              </p>
+            </div>
+            <Separator />
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                Risk Signals
+              </h4>
+              <p className="text-sm leading-relaxed text-muted-foreground pl-6">
+                {insights.riskSignals}
+              </p>
+            </div>
+            <Separator />
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-green-500" />
+                Strategic Recommendations
+              </h4>
+              <p className="text-sm leading-relaxed text-muted-foreground pl-6">
+                {insights.strategicRecommendations}
+              </p>
+            </div>
           </CardContent>
         </Card>
       )}

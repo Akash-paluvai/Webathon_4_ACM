@@ -1,13 +1,14 @@
 """
 Phase-4 Route — Post-Production & Market Testing
 POST /api/projects/{project_id}/phase/4
+POST /api/projects/{project_id}/phase/4/insights
 
 Accepts multipart form:
   - trailer_video: UploadFile (MP4)
   - testStrategy: str (FESTIVAL | PRIVATE | DIGITAL)
 
 Calls trailer_analysis + phase4_logic, updates the FilmProject,
-and returns the computed results.  No AI insights generated here.
+and returns the computed results.
 """
 
 import os
@@ -22,7 +23,7 @@ from database import get_db
 from models import FilmProject
 from services.trailer_analysis import extract_trailer_features
 from services.phase4_logic import compute_phase4
-from services.phase4_insights import generate_phase4_insights
+from services.cerebras_insights import generate_cerebras_insights
 
 router = APIRouter(prefix="/api/projects", tags=["Phase 4"])
 
@@ -80,7 +81,7 @@ def run_phase4(
     }
 
 
-# ── Phase-4 Insight generation (rule-based, no LLM) ───────
+# ── Phase-4 AI Insight generation (Cerebras) ──────────────
 
 class Phase4InsightRequest(BaseModel):
     audienceType: str
@@ -100,13 +101,15 @@ def get_phase4_insights(
     if not project:
         raise HTTPException(status_code=404, detail="Film project not found")
 
-    insights = generate_phase4_insights(
-        scale=project.scale,
-        production_health=project.production_health,
+    ai_insights = generate_cerebras_insights(
         audience_type=data.audienceType,
-        audience_interest_score=data.audienceInterestScore,
         test_strategy=data.testStrategy,
+        audience_interest_score=data.audienceInterestScore,
         trailer_features=data.trailerFeatures,
     )
 
-    return {"insights": insights}
+    return {
+        "marketRead": ai_insights["marketRead"],
+        "riskSignals": ai_insights["riskSignals"],
+        "strategicRecommendations": ai_insights["strategicRecommendations"],
+    }

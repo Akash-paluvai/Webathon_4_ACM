@@ -24,9 +24,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   ArrowLeft, Megaphone, BarChart3, AlertTriangle, Loader2,
   ShieldAlert, TrendingUp, Info, Lightbulb, Users,
+  ChevronDown, ChevronUp, FlaskConical, ArrowUpRight, ArrowDownRight,
 } from 'lucide-react';
-import { submitPhase5, fetchTrendingCreators } from '@/api';
-import type { Phase5Result, TrendingCreator } from '@/api';
+import { submitPhase5, fetchTrendingCreators, simulateScenario } from '@/api';
+import type { Phase5Result, TrendingCreator, ScenarioResult } from '@/api';
 
 export default function Phase5Page() {
   const navigate = useNavigate();
@@ -38,6 +39,15 @@ export default function Phase5Page() {
   const [error, setError] = useState<string | null>(null);
   const [creators, setCreators] = useState<TrendingCreator[]>([]);
   const [creatorsLoading, setCreatorsLoading] = useState(false);
+
+  // Rationale panel
+  const [rationaleOpen, setRationaleOpen] = useState(false);
+
+  // What-if scenario
+  const [scenarioAudience, setScenarioAudience] = useState<string>('');
+  const [scenarioBudget, setScenarioBudget] = useState<string>('');
+  const [scenarioResult, setScenarioResult] = useState<ScenarioResult | null>(null);
+  const [scenarioRunning, setScenarioRunning] = useState(false);
 
   useEffect(() => {
     if (!result) return;
@@ -60,6 +70,25 @@ export default function Phase5Page() {
       setError(err instanceof Error ? err.message : 'Failed to generate marketing plan');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleScenario = async () => {
+    if (!result) return;
+    setScenarioRunning(true);
+    setScenarioResult(null);
+    try {
+      const res = await simulateScenario(
+        Number(projectId),
+        result.marketingBudgetLevel,
+        scenarioAudience || undefined,
+        scenarioBudget || undefined,
+      );
+      setScenarioResult(res.scenarioResult);
+    } catch {
+      // silently fail
+    } finally {
+      setScenarioRunning(false);
     }
   };
 
@@ -453,6 +482,153 @@ export default function Phase5Page() {
                   </CardContent>
                 </Card>
               )}
+
+              {/* ── Why this decision? panel ── */}
+              <Card>
+                <CardHeader
+                  className="cursor-pointer select-none"
+                  onClick={() => setRationaleOpen(!rationaleOpen)}
+                >
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center gap-2 text-base">
+                      <Info className="h-5 w-5" />
+                      Why this marketing strategy?
+                    </span>
+                    {rationaleOpen ? (
+                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                {rationaleOpen && (
+                  <CardContent className="space-y-3 pt-0">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-muted/50 rounded-lg p-3">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Audience</p>
+                        <Badge variant="outline">{result.decisionRationale.audience}</Badge>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-3">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Budget</p>
+                        <Badge variant="outline">{result.decisionRationale.budget}</Badge>
+                      </div>
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-3 space-y-1">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Channel Selection</p>
+                      <p className="text-sm">{result.decisionRationale.channelReason}</p>
+                      <p className="text-xs text-muted-foreground">{result.decisionRationale.primaryAllocation}</p>
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-3 space-y-1">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Risk Assessment</p>
+                      <p className="text-sm">{result.decisionRationale.riskReason}</p>
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-3 space-y-1">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Audience Interest</p>
+                      <p className="text-sm">{result.decisionRationale.interestContext}</p>
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+
+              {/* ── What if? scenario toggler ── */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <FlaskConical className="h-5 w-5" />
+                    What If?
+                  </CardTitle>
+                  <CardDescription>
+                    Override audience or budget to simulate an alternative scenario
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Audience Type</Label>
+                      <Select value={scenarioAudience} onValueChange={setScenarioAudience}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Keep current" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="NICHE">Niche</SelectItem>
+                          <SelectItem value="REGIONAL">Regional</SelectItem>
+                          <SelectItem value="MASS">Mass</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Budget Level</Label>
+                      <Select value={scenarioBudget} onValueChange={setScenarioBudget}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Keep current" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="LOW">Low</SelectItem>
+                          <SelectItem value="MEDIUM">Medium</SelectItem>
+                          <SelectItem value="HIGH">High</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    disabled={scenarioRunning || (!scenarioAudience && !scenarioBudget)}
+                    onClick={handleScenario}
+                  >
+                    {scenarioRunning ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Simulating…</>
+                    ) : (
+                      <><FlaskConical className="h-4 w-4 mr-2" /> Simulate Scenario</>
+                    )}
+                  </Button>
+
+                  {/* Scenario Result */}
+                  {scenarioResult && (
+                    <div className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs">Simulated</Badge>
+                        <span className="text-xs text-muted-foreground">vs. baseline</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Discoverability</p>
+                          <p className="text-lg font-bold">{scenarioResult.discoverability}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Delta</p>
+                          <p className={`text-lg font-bold flex items-center gap-1 ${scenarioResult.delta > 0 ? 'text-green-500' : scenarioResult.delta < 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
+                            {scenarioResult.delta > 0 ? (
+                              <ArrowUpRight className="h-4 w-4" />
+                            ) : scenarioResult.delta < 0 ? (
+                              <ArrowDownRight className="h-4 w-4" />
+                            ) : null}
+                            {scenarioResult.delta > 0 ? '+' : ''}{scenarioResult.delta}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Primary Channel</p>
+                          <Badge variant="outline" className="text-xs mt-1">
+                            {channelLabel(scenarioResult.primaryChannel)}
+                          </Badge>
+                        </div>
+                      </div>
+                      <Separator />
+                      <div className="space-y-1.5">
+                        {Object.entries(scenarioResult.budgetAllocation)
+                          .sort(([, a], [, b]) => b - a)
+                          .map(([ch, pct]) => (
+                            <div key={ch} className="flex items-center gap-2 text-xs">
+                              <div className={`w-2 h-2 rounded-full ${channelColor(ch)}`} />
+                              <span className="text-muted-foreground flex-1">{channelLabel(ch)}</span>
+                              <span className="font-medium">{pct}%</span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </>
           )}
         </div>

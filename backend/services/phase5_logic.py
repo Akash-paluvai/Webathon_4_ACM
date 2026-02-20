@@ -113,6 +113,12 @@ def compute_phase5(
     risk_decomp = _risk_decomposition(aud, mkt_budget, allocation, audience_interest_score)
     why_not = _channel_deprioritization(allocation, affinities, aud, mkt_budget)
 
+    # ── 8. Decision rationale (explanatory only) ───────────
+    rationale = _build_decision_rationale(
+        aud, mkt_budget, primary_channel, allocation, risk,
+        audience_interest_score,
+    )
+
     return {
         "budgetAllocation": allocation,
         "discoverabilityScore": disc_score,
@@ -124,6 +130,7 @@ def compute_phase5(
         "diminishingReturnsInsight": dim_returns,
         "riskDecomposition": risk_decomp,
         "channelDeprioritization": why_not,
+        "decisionRationale": rationale,
     }
 
 
@@ -436,3 +443,71 @@ def _channel_deprioritization(
     return (
         f"{label} was deprioritised ({pct}% allocation) due to {reason_text}."
     )
+
+
+# ── Decision rationale (explanatory, no recomputation) ─────
+
+_CHANNEL_REASON_MAP = {
+    "ADS": {
+        "mass": "Digital ads provide the broadest reach efficiency for mass audiences",
+        "regional": "Targeted digital ads effectively reach regionally concentrated audiences",
+        "niche": "Digital ads offer baseline visibility even for niche audiences",
+    },
+    "INFLUENCER": {
+        "mass": "Influencer channels amplify awareness across diverse demographics",
+        "regional": "Regional influencers drive high engagement within local communities",
+        "niche": "Niche influencers deliver high-affinity engagement for specialised audiences",
+    },
+    "FESTIVAL": {
+        "mass": "Festival presence provides prestige visibility for wide-release films",
+        "regional": "Festival circuits connect effectively with culturally engaged regional audiences",
+        "niche": "Festival channels historically outperform ads for niche films",
+    },
+    "ORGANIC": {
+        "mass": "Organic channels sustain long-tail engagement for mass-market content",
+        "regional": "Organic reach builds community-driven awareness in regional markets",
+        "niche": "Organic and PR channels drive word-of-mouth for niche content",
+    },
+}
+
+_RISK_REASON_MAP = {
+    "LOW": "Low concentration and stable allocation signals across channels",
+    "MEDIUM": "Moderate concentration or budget constraints introduce some variability",
+    "HIGH": "Significant budget-audience mismatch or over-concentration in a single channel",
+}
+
+
+def _build_decision_rationale(
+    aud: str,
+    mkt_budget: str,
+    primary_channel: str,
+    allocation: Dict[str, int],
+    risk: str,
+    interest_score: int,
+) -> Dict[str, str]:
+    """Build explanatory rationale from existing signals. No recomputation."""
+    channel_reasons = _CHANNEL_REASON_MAP.get(primary_channel, {})
+    channel_reason = channel_reasons.get(
+        aud,
+        f"{primary_channel} was selected as the highest-affinity channel for this audience",
+    )
+
+    risk_reason = _RISK_REASON_MAP.get(risk, "Risk level reflects overall allocation balance")
+
+    # Interest context
+    if interest_score >= 70:
+        interest_context = f"Strong audience interest ({interest_score}/100) amplifies channel effectiveness"
+    elif interest_score >= 45:
+        interest_context = f"Moderate audience interest ({interest_score}/100) supports steady campaign performance"
+    else:
+        interest_context = f"Lower audience interest ({interest_score}/100) may require supplementary engagement tactics"
+
+    return {
+        "audience": aud.upper(),
+        "budget": mkt_budget.upper(),
+        "channelReason": channel_reason,
+        "riskReason": risk_reason,
+        "interestContext": interest_context,
+        "primaryAllocation": f"{primary_channel} receives {allocation.get(primary_channel, 0)}% of budget",
+    }
+
