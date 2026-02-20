@@ -9,13 +9,13 @@ client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 def generate_script_analysis(script_text: str):
     try:
         prompt = f"""
-You are a professional film analyst.
+You are a film intelligence AI.
 
-Return JSON:
+Return ONLY JSON:
+
 {{
  "summary": "",
- "theme": "",
- "target_audience": "",
+ "genre": "",
  "feasibility_score": 0,
  "risk_level": "",
  "audience_affinity": 0
@@ -26,7 +26,7 @@ Script:
 """
 
         response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",   # ← WORKING FREE MODEL
+            model="llama-3.1-8b-instant",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.4,
             max_tokens=300,
