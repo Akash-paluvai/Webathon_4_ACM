@@ -19,9 +19,11 @@ from schemas import (
     InsightResponse,
 )
 
+# PART A engines
 from partA.analysis_engine import analyze_script_and_audience
+from partA.phase1_confirm_engine import confirm_phase1
 
-# Create tables
+# create tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Film Producer Decision Support Platform API")
@@ -36,25 +38,38 @@ app.add_middleware(
 )
 
 # ─────────────────────────────
-# Phase 1 Analysis Endpoint
+# PHASE 1 ANALYSIS
 # ─────────────────────────────
 
 @app.post("/api/phase1/analyze")
 def analyze_phase1(payload: dict):
     if not payload.get("scriptText"):
-        raise HTTPException(status_code=400, detail="Script text required")
+        raise HTTPException(status_code=400, detail="scriptText required")
 
     return analyze_script_and_audience(payload)
 
 
 # ─────────────────────────────
-# Health Check
+# PHASE 1 CONFIRM
+# ─────────────────────────────
+
+@app.post("/api/phase1/confirm", response_model=FilmProjectResponse)
+def phase1_confirm_route(payload: dict, db: Session = Depends(get_db)):
+    return confirm_phase1(payload, db)
+
+
+# ─────────────────────────────
+# HEALTH
 # ─────────────────────────────
 
 @app.get("/api/health")
 def health_check():
     return {"status": "ok"}
 
+
+# ─────────────────────────────
+# RUN SERVER
+# ─────────────────────────────
 
 if __name__ == "__main__":
     import uvicorn
