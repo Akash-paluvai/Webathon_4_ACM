@@ -1,24 +1,11 @@
 import { Link, useNavigate } from '@tanstack/react-router';
+import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { Button } from '@/components/ui/button';
-import { Film } from 'lucide-react';
+import { Film, LogIn, LogOut, UserPlus } from 'lucide-react';
 
-/**
- * Navigation Component
- * 
- * Provides consistent navigation across the application.
- * 
- * ARCHITECTURE NOTE:
- * - This component provides access to the landing page and projects list
- * - Individual phase navigation (Phase 1-8) is available from project overview pages
- * - Each phase is independent and can be developed in parallel without modifying this core navigation
- * 
- * EXTENSION APPROACH:
- * - To add new top-level features, add links here
- * - Phase-specific features should be accessed through the project overview page
- * - Do NOT add phase-specific logic to this component
- */
 export default function Navigation() {
   const navigate = useNavigate();
+  const { login, register, logout, isAuthenticated, user, isLoading } = useKindeAuth();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -44,10 +31,51 @@ export default function Navigation() {
               </Link>
             </nav>
           </div>
-          <div className="flex items-center gap-4">
-            <Button onClick={() => navigate({ to: '/projects' })} variant="default">
-              View Projects
-            </Button>
+          <div className="flex items-center gap-3">
+            {isLoading ? (
+              <div className="h-9 w-24 rounded-md bg-muted animate-pulse" />
+            ) : isAuthenticated ? (
+              <>
+                {user?.givenName && (
+                  <span className="text-sm text-muted-foreground hidden sm:inline">
+                    Hi, <span className="font-medium text-foreground">{user.givenName}</span>
+                  </span>
+                )}
+                <Button onClick={() => navigate({ to: '/projects' })} variant="default" size="sm">
+                  Projects
+                </Button>
+                <Button
+                  onClick={() => logout()}
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  onClick={() => login()}
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                >
+                  <LogIn className="h-4 w-4" />
+                  Login
+                </Button>
+                <Button
+                  onClick={() => register()}
+                  variant="default"
+                  size="sm"
+                  className="gap-1.5"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Sign Up
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>

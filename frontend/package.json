@@ -30,6 +30,7 @@
     "@dfinity/identity": "~3.3.0",
     "@dfinity/principal": "~3.3.0",
     "@icp-sdk/core": "~4.1.0",
+    "@kinde-oss/kinde-auth-react": "^5.11.0",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-alert-dialog": "^1.1.2",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
