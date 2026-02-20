@@ -18,14 +18,12 @@ from schemas import (
     InsightResponse,
 )
 
-# Create all tables on startup
-Base.metadata.create_all(bind=engine)
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="Film Producer Decision Support Platform API")
 
-# Seed Phase 6 reference data
-@app.on_event("startup")
-def _seed_phase6_data():
+@asynccontextmanager
+async def lifespan(application: FastAPI):
+    # Seed Phase 6 reference data on startup
     from database import SessionLocal
     db = SessionLocal()
     try:
@@ -33,6 +31,20 @@ def _seed_phase6_data():
         seed_all(db)
     finally:
         db.close()
+    yield
+
+# Create all tables on startup
+Base.metadata.create_all(bind=engine)
+app = FastAPI(title="Film Producer Decision Support Platform API", lifespan=lifespan)
+
+# Register phase-specific routers
+from routes.phase4 import router as phase4_router
+app.include_router(phase4_router)
+from routes.phase5 import router as phase5_router
+app.include_router(phase5_router)
+from routes.marketing import router as marketing_router
+app.include_router(marketing_router)
+
 
 # CORS — allow the Vite dev server
 app.add_middleware(
