@@ -17,12 +17,15 @@ from schemas import (
     InsightResponse,
 )
 
-# Create all tables on startup
+# 🔹 NEW: Import Part-A engine
+from partA.concept_engine import analyze_script
+
+# Create tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Film Producer Decision Support Platform API")
 
-# CORS — allow the Vite dev server
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -30,6 +33,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ──────────────────────────────────────────────
+# 🔹 PART A — Concept Exploration (NO DB WRITE)
+# ──────────────────────────────────────────────
+
+@app.post("/api/phase1/analyze")
+def analyze_phase1(payload: dict):
+    """
+    Analyze script concept.
+    This does NOT write to DB.
+    Used before confirmation step.
+    """
+    if not payload.get("scriptText"):
+        raise HTTPException(status_code=400, detail="Script text required")
+
+    result = analyze_script(payload)
+    return result
 
 
 # ──────────────────────────────────────────────
@@ -170,6 +190,7 @@ def get_project_with_insights(project_id: int, db: Session = Depends(get_db)):
         .order_by(Insight.timestamp)
         .all()
     )
+
     return FilmProjectWithInsights(
         project=FilmProjectResponse.from_orm_model(project),
         insights=insights,
