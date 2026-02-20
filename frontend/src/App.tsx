@@ -1,5 +1,6 @@
 import { createRouter, RouterProvider, createRoute, createRootRoute, Outlet } from '@tanstack/react-router';
 import Navigation from './components/Navigation';
+import ChatBot from './components/ChatBot';
 import LandingPage from './pages/LandingPage';
 import ProjectListPage from './pages/ProjectListPage';
 import ProjectOverviewPage from './pages/ProjectOverviewPage';
@@ -37,6 +38,7 @@ function Layout() {
           </p>
         </div>
       </footer>
+      <ChatBot />
     </div>
   );
 }
