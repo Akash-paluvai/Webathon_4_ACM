@@ -2,38 +2,44 @@ from datetime import datetime, timezone
 from typing import List
 from contextlib import asynccontextmanager
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from database import engine, get_db, Base
 from models import FilmProject, Insight
-import phase6_models  # noqa — registers Phase 6 tables
+import phase6_models  # registers Phase 6 tables
+
 from schemas import (
-    FilmProjectCreate,
-    FilmProjectUpdate,
-    FilmProjectResponse,
-    FilmProjectWithInsights,
-    PhaseUpdate,
-    InsightCreate,
-    InsightResponse,
+    FilmProjectCreate, FilmProjectUpdate, PhaseUpdate,
+    InsightCreate, InsightResponse,
+    FilmProjectResponse, FilmProjectWithInsights,
 )
 
-# 🔹 Phase 1 engine (Part A)
-from partA.concept_engine import analyze_script
+# ──────────────────────────────────────────────
+# Phase 1–3 Engines (Part A)
+# ──────────────────────────────────────────────
 
+from partA.script_analysis_model import analyze_script_text
+from partA.phase1_confirm_engine import confirm_phase1
+
+from partA.feasibility import compute_feasibility
+from partA.package_ing import evaluate_packaging
+from partA.confirm import confirm_phase2
+
+from partA.phase3_ai_engine import analyze_phase3
+from partA.phase3_explain import explain_phase3
+from partA.phase3_confirm import confirm_phase3
 
 # ──────────────────────────────────────────────
-# Application lifespan (startup / shutdown)
+# Application lifespan
 # ──────────────────────────────────────────────
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    App startup tasks:
-    - Create DB tables
-    - Seed Phase 6 reference data
-    """
     Base.metadata.create_all(bind=engine)
 
     from database import SessionLocal
@@ -43,9 +49,7 @@ async def lifespan(app: FastAPI):
         seed_all(db)
     finally:
         db.close()
-
     yield
-
 
 # ──────────────────────────────────────────────
 # App init
@@ -68,63 +72,57 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # ──────────────────────────────────────────────
 # Phase Routers
 # ──────────────────────────────────────────────
 
 from routes.phase4 import router as phase4_router
-app.include_router(phase4_router)
-
 from routes.phase5 import router as phase5_router
-app.include_router(phase5_router)
-
 from routes.marketing import router as marketing_router
-app.include_router(marketing_router)
-
 from phase6.routes import router as phase6_router
-app.include_router(phase6_router, prefix="/phase6", tags=["Phase 6"])
-
 from phase7.routes import router as phase7_router
+
+app.include_router(phase4_router)
+app.include_router(phase5_router)
+app.include_router(marketing_router)
+app.include_router(phase6_router, prefix="/phase6", tags=["Phase 6"])
 app.include_router(phase7_router, prefix="/phase7", tags=["Phase 7"])
 
-
 # ──────────────────────────────────────────────
-# Phase 1 — Concept Exploration (NO DB WRITE)
+# Phase 1 — Concept Exploration
 # ──────────────────────────────────────────────
 
 @app.post("/api/phase1/analyze")
-def analyze_phase1(payload: dict):
-    """
-    Analyze script concept.
-    Stateless analysis — does NOT write to DB.
-    """
+def phase1_analyze(payload: dict):
     if not payload.get("scriptText"):
         raise HTTPException(status_code=400, detail="Script text required")
 
-    return analyze_script(payload)
+    return analyze_script_text(
+        script_text=payload["scriptText"],
+        genre=payload.get("genre", "Drama"),
+        theme=payload.get("theme", ""),
+        scale=payload.get("scale", "studio"),
+    )
 
 
+@app.post("/api/phase1/confirm", response_model=FilmProjectResponse)
+def phase1_confirm(payload: dict, db: Session = Depends(get_db)):
+    return confirm_phase1(payload, db)
+
 # ──────────────────────────────────────────────
-# Film Project endpoints
+# Project CRUD
 # ──────────────────────────────────────────────
+
+@app.get("/api/projects", response_model=List[FilmProjectResponse])
+def list_projects(db: Session = Depends(get_db)):
+    projects = db.query(FilmProject).order_by(FilmProject.last_updated.desc()).all()
+    return [FilmProjectResponse.from_orm_model(p) for p in projects]
+
 
 @app.post("/api/projects", response_model=FilmProjectResponse)
-def create_project(data: FilmProjectCreate, db: Session = Depends(get_db)):
+def create_project(payload: FilmProjectCreate, db: Session = Depends(get_db)):
     project = FilmProject(
-        title=data.title,
-        genre=data.genre,
-        language=data.language,
-        theme=data.theme,
-        scale=data.scale,
-        budget_level=data.budget_level,
-        talent_strategy=data.talent_strategy,
-        planned_shoot_days=data.planned_shoot_days,
-        audience_type=data.audience_type,
-        marketing_budget_level=data.marketing_budget_level,
-        primary_marketing_channel=data.primary_marketing_channel,
-        release_model=data.release_model,
-        distribution_confidence=data.distribution_confidence,
+        **payload.model_dump(),
         current_phase=1,
         production_health="good",
         last_updated=datetime.now(timezone.utc),
@@ -135,27 +133,13 @@ def create_project(data: FilmProjectCreate, db: Session = Depends(get_db)):
     return FilmProjectResponse.from_orm_model(project)
 
 
-@app.get("/api/projects", response_model=List[FilmProjectResponse])
-def get_all_projects(db: Session = Depends(get_db)):
-    projects = db.query(FilmProject).all()
-    return [FilmProjectResponse.from_orm_model(p) for p in projects]
-
-
-@app.get("/api/projects/{project_id}", response_model=FilmProjectResponse)
-def get_project(project_id: int, db: Session = Depends(get_db)):
-    project = db.query(FilmProject).filter(FilmProject.id == project_id).first()
-    if not project:
-        raise HTTPException(status_code=404, detail="Film project not found")
-    return FilmProjectResponse.from_orm_model(project)
-
-
 @app.put("/api/projects/{project_id}", response_model=FilmProjectResponse)
-def update_project(project_id: int, data: FilmProjectUpdate, db: Session = Depends(get_db)):
+def update_project(project_id: int, payload: FilmProjectUpdate, db: Session = Depends(get_db)):
     project = db.query(FilmProject).filter(FilmProject.id == project_id).first()
     if not project:
-        raise HTTPException(status_code=404, detail="Film project not found")
+        raise HTTPException(status_code=404, detail="Project not found")
 
-    for field, value in data.dict(exclude_unset=True).items():
+    for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(project, field, value)
 
     project.last_updated = datetime.now(timezone.utc)
@@ -165,44 +149,26 @@ def update_project(project_id: int, data: FilmProjectUpdate, db: Session = Depen
 
 
 @app.patch("/api/projects/{project_id}/phase", response_model=FilmProjectResponse)
-def update_project_phase(project_id: int, data: PhaseUpdate, db: Session = Depends(get_db)):
+def update_project_phase(project_id: int, payload: PhaseUpdate, db: Session = Depends(get_db)):
     project = db.query(FilmProject).filter(FilmProject.id == project_id).first()
     if not project:
-        raise HTTPException(status_code=404, detail="Film project not found")
+        raise HTTPException(status_code=404, detail="Project not found")
 
-    if not 1 <= data.new_phase <= 8:
+    if not 1 <= payload.new_phase <= 8:
         raise HTTPException(status_code=400, detail="Phase must be between 1 and 8")
 
-    project.current_phase = data.new_phase
+    project.current_phase = payload.new_phase
     project.last_updated = datetime.now(timezone.utc)
     db.commit()
     db.refresh(project)
     return FilmProjectResponse.from_orm_model(project)
 
-
 # ──────────────────────────────────────────────
-# Insight endpoints
+# Insights
 # ──────────────────────────────────────────────
-
-@app.post("/api/projects/{project_id}/insights", response_model=InsightResponse)
-def add_insight(project_id: int, data: InsightCreate, db: Session = Depends(get_db)):
-    project = db.query(FilmProject).filter(FilmProject.id == project_id).first()
-    if not project:
-        raise HTTPException(status_code=404, detail="Film project not found")
-
-    insight = Insight(
-        project_id=project_id,
-        content=data.content,
-        timestamp=datetime.now(timezone.utc),
-    )
-    db.add(insight)
-    db.commit()
-    db.refresh(insight)
-    return insight
-
 
 @app.get("/api/projects/{project_id}/insights", response_model=List[InsightResponse])
-def get_project_insights(project_id: int, db: Session = Depends(get_db)):
+def list_insights(project_id: int, db: Session = Depends(get_db)):
     return (
         db.query(Insight)
         .filter(Insight.project_id == project_id)
@@ -211,36 +177,28 @@ def get_project_insights(project_id: int, db: Session = Depends(get_db)):
     )
 
 
-@app.get("/api/projects/{project_id}/with-insights", response_model=FilmProjectWithInsights)
-def get_project_with_insights(project_id: int, db: Session = Depends(get_db)):
-    project = db.query(FilmProject).filter(FilmProject.id == project_id).first()
-    if not project:
-        raise HTTPException(status_code=404, detail="Film project not found")
-
-    insights = (
-        db.query(Insight)
-        .filter(Insight.project_id == project_id)
-        .order_by(Insight.timestamp)
-        .all()
+@app.post("/api/projects/{project_id}/insights", response_model=InsightResponse)
+def add_insight(project_id: int, payload: InsightCreate, db: Session = Depends(get_db)):
+    insight = Insight(
+        project_id=project_id,
+        content=payload.content,
+        timestamp=datetime.now(timezone.utc),
     )
-
-    return FilmProjectWithInsights(
-        project=FilmProjectResponse.from_orm_model(project),
-        insights=insights,
-    )
-
+    db.add(insight)
+    db.commit()
+    db.refresh(insight)
+    return insight
 
 # ──────────────────────────────────────────────
-# Health check
+# Health
 # ──────────────────────────────────────────────
 
 @app.get("/api/health")
 def health_check():
     return {"status": "ok"}
 
-
 # ──────────────────────────────────────────────
-# Local dev runner
+# Local dev
 # ──────────────────────────────────────────────
 
 if __name__ == "__main__":

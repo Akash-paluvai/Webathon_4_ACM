@@ -298,4 +298,93 @@ export async function getPhase7Timeline(projectId: ProjectId): Promise<any> {
         throw new Error(error.detail || `API error: ${res.status}`);
     }
     return res.json();
+// ── Phase 1: Concept Intelligence ──
+
+export async function analyzePhase1(payload: {
+    scriptText: string;
+    genre?: string;
+    theme?: string;
+    scale?: string;
+}) {
+    return request<any>('/phase1/analyze', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+}
+
+export async function confirmPhase1(payload: {
+    title: string;
+    genre: string;
+    language: string;
+    theme: string;
+    scale: string;
+    conceptRisk: string;
+    targetAudience: string;
+    goDecision: string;
+}) {
+    return request<any>('/phase1/confirm', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+}
+
+// ── Phase 2: Packaging & Feasibility ──
+
+export async function analyzeFeasibility(projectId: ProjectId, payload: {
+    budgetLevel: string;
+    talentStrategy: string;
+}) {
+    return request<any>(`/phase2/feasibility/${projectId}`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+}
+
+export async function analyzePackaging(projectId: ProjectId, payload: {
+    budgetLevel: string;
+    talentStrategy: string;
+}) {
+    return request<any>(`/phase2/packaging/${projectId}`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+}
+
+export async function confirmPhase2(projectId: ProjectId, payload: {
+    budgetLevel: string;
+    talentStrategy: string;
+}) {
+    return request<any>(`/phase2/confirm/${projectId}`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+}
+
+// ── Phase 3: Production Intelligence ──
+
+export async function analyzePhase3(payload: {
+    projectId?: number;
+    plannedShootDays: number;
+    daysPerWeek: number;
+    hoursPerDay: number;
+    crewSize: number;
+    complexityLevel: number;
+    currentProgressPercent: number;
+    actualShootDays?: number | null;
+}) {
+    return request<any>('/phase3/analyze', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+}
+
+export async function confirmPhase3(projectId: ProjectId, payload: {
+    plannedShootDays: number;
+    actualShootDays?: number | null;
+    productionHealth: string;
+}) {
+    return request<any>(`/phase3/confirm/${projectId}`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
 }

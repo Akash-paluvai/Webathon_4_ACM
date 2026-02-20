@@ -1,22 +1,7 @@
 {
-    "THRILLER": {
-        "demand": 0.82,
-        "volatility": 0.6
-    },
-    "DRAMA": {
-        "demand": 0.65,
-        "volatility": 0.3
-    },
-    "COMEDY": {
-        "demand": 0.75,
-        "volatility": 0.4
-    },
-    "ACTION": {
-        "demand": 0.88,
-        "volatility": 0.7
-    },
-    "ROMANCE": {
-        "demand": 0.60,
-        "volatility": 0.2
-    }
+  "THRILLER": { "demand": 0.82, "volatility": 0.6 },
+  "DRAMA": { "demand": 0.65, "volatility": 0.3 },
+  "COMEDY": { "demand": 0.75, "volatility": 0.4 },
+  "ACTION": { "demand": 0.88, "volatility": 0.7 },
+  "ROMANCE": { "demand": 0.60, "volatility": 0.2 }
 }
