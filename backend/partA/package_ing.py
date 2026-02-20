@@ -2,13 +2,9 @@ from .feasibility import compute_feasibility
 from .roi import compute_roi
 
 
-def evaluate_packaging(payload: dict):
-    """
-    Step-6:
-    Compare packaging options.
-    """
+def evaluate_packaging(project, payload: dict):
 
-    scale = payload.get("scale")
+    scale = project.scale
 
     scenarios = [
         {"budgetLevel": "Low", "talentStrategy": "Newcomers"},
@@ -19,11 +15,7 @@ def evaluate_packaging(payload: dict):
     results = []
 
     for s in scenarios:
-        feasibility = compute_feasibility({
-            "budgetLevel": s["budgetLevel"],
-            "talentStrategy": s["talentStrategy"],
-            "scale": scale
-        })
+        feasibility = compute_feasibility(project, s)
 
         roi = compute_roi(
             feasibility["feasibility_score"],
@@ -40,16 +32,7 @@ def evaluate_packaging(payload: dict):
 
     best_option = max(results, key=lambda x: x["roi_probability"])
 
-    notes = []
-    if best_option["risk_indicator"] == "High":
-        notes.append("High execution risk")
-    if best_option["roi_probability"] < 60:
-        notes.append("Limited ROI upside")
-    if best_option["budgetLevel"] == "High":
-        notes.append("High budget pressure")
-
     return {
         "scenarios": results,
-        "recommended_option": best_option,
-        "risk_notes": notes
+        "recommended_option": best_option
     }

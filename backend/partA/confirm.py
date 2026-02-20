@@ -3,6 +3,7 @@ from models import FilmProject
 
 
 def confirm_phase2(project_id: int, payload: dict, db):
+
     project = db.query(FilmProject).filter(FilmProject.id == project_id).first()
 
     if not project:
@@ -10,7 +11,8 @@ def confirm_phase2(project_id: int, payload: dict, db):
 
     project.budget_level = payload.get("budgetLevel")
     project.talent_strategy = payload.get("talentStrategy")
-    project.productionFeasibility = payload.get("productionFeasibility")
+
+    # Advance lifecycle
     project.current_phase = 3
     project.last_updated = datetime.now(timezone.utc)
 
