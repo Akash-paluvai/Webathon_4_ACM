@@ -118,3 +118,17 @@ export async function getProjectWithInsights(
 ): Promise<FilmProjectWithInsights> {
     return request<FilmProjectWithInsights>(`/projects/${projectId}/with-insights`);
 }
+
+// ── Phase 6 Analysis API ──
+
+export async function getPhase6Analysis(projectId: ProjectId): Promise<any> {
+    const res = await fetch(`/phase6/analyze?project_id=${projectId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+        const error = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(error.detail || `API error: ${res.status}`);
+    }
+    return res.json();
+}

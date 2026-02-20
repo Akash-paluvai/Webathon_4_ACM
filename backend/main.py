@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from database import engine, get_db, Base
 from models import FilmProject, Insight
+import phase6_models  # noqa — registers Phase 6 tables with Base.metadata
 from schemas import (
     FilmProjectCreate,
     FilmProjectUpdate,
@@ -22,6 +23,17 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Film Producer Decision Support Platform API")
 
+# Seed Phase 6 reference data
+@app.on_event("startup")
+def _seed_phase6_data():
+    from database import SessionLocal
+    db = SessionLocal()
+    try:
+        from phase6.services.seed_data import seed_all
+        seed_all(db)
+    finally:
+        db.close()
+
 # CORS — allow the Vite dev server
 app.add_middleware(
     CORSMiddleware,
@@ -30,6 +42,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Phase 6 router
+from phase6.routes import router as phase6_router
+app.include_router(phase6_router, prefix="/phase6", tags=["Phase 6"])
 
 
 # ──────────────────────────────────────────────
