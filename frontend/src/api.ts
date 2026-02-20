@@ -118,3 +118,71 @@ export async function getProjectWithInsights(
 ): Promise<FilmProjectWithInsights> {
     return request<FilmProjectWithInsights>(`/projects/${projectId}/with-insights`);
 }
+
+// ── Phase 4 API ──
+
+export interface Phase4Result {
+    projectId: number;
+    testStrategy: string;
+    audienceType: string;
+    audienceInterestScore: number;
+    trailerFeatures: Record<string, unknown>;
+}
+
+export async function submitPhase4(
+    projectId: ProjectId,
+    trailerFile: File,
+    testStrategy: string
+): Promise<Phase4Result> {
+    const form = new FormData();
+    form.append('trailer_video', trailerFile);
+    form.append('testStrategy', testStrategy);
+
+    const res = await fetch(`${API_BASE}/projects/${projectId}/phase/4`, {
+        method: 'POST',
+        body: form,
+    });
+    if (!res.ok) {
+        const error = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(error.detail || `API error: ${res.status}`);
+    }
+    return res.json();
+}
+
+export async function generatePhase4Insights(
+    projectId: ProjectId,
+    data: {
+        audienceType: string;
+        audienceInterestScore: number;
+        testStrategy: string;
+        trailerFeatures: Record<string, unknown>;
+    }
+): Promise<{ insights: string[] }> {
+    return request<{ insights: string[] }>(`/projects/${projectId}/phase/4/insights`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
+// ── Phase 5 API ──
+
+export interface Phase5Result {
+    projectId: number;
+    marketingBudgetLevel: string;
+    primaryMarketingChannel: string;
+    budgetAllocation: Record<string, number>;
+    discoverabilityScore: number;
+    marketingRisk: string;
+    riskFlags: string[];
+    explanation: string;
+}
+
+export async function submitPhase5(
+    projectId: ProjectId,
+    marketingBudgetLevel: string
+): Promise<Phase5Result> {
+    return request<Phase5Result>(`/projects/${projectId}/phase/5`, {
+        method: 'POST',
+        body: JSON.stringify({ marketingBudgetLevel }),
+    });
+}

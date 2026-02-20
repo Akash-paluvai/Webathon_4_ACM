@@ -22,6 +22,12 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Film Producer Decision Support Platform API")
 
+# Register phase-specific routers
+from routes.phase4 import router as phase4_router
+app.include_router(phase4_router)
+from routes.phase5 import router as phase5_router
+app.include_router(phase5_router)
+
 # CORS — allow the Vite dev server
 app.add_middleware(
     CORSMiddleware,
