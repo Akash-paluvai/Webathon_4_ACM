@@ -143,63 +143,66 @@ export default function Phase5Page() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Users className="h-4 w-4" />
-            Prominent Indian Film Actors for Promotion
+            High-Reach YouTube Channels (Discovery Signals)
           </CardTitle>
           <CardDescription className="text-xs">
-            Curated actors validated via public YouTube activity
+            Channels identified using public reach metrics
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {creatorsLoading ? (
             <div className="flex items-center justify-center py-6 text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              <span className="text-xs">Loading…</span>
+              <span className="text-xs">Discovering channels…</span>
             </div>
           ) : creators.length === 0 ? (
             <p className="text-xs text-muted-foreground py-4 text-center">
-              No actors available at this time.
+              No channels meet the reach threshold at this time.
             </p>
           ) : (
             <>
               {creators.map((creator, idx) => (
-                <div key={idx} className="border rounded-lg overflow-hidden">
-                  {/* Thumbnail */}
-                  <div className="relative aspect-video bg-muted">
+                <div key={idx} className="flex items-start gap-3 p-2.5 border rounded-lg">
+                  {/* Circular channel logo */}
+                  <div className="shrink-0">
                     <img
-                      src={creator.thumbnailUrl}
-                      alt={`Recent YouTube content featuring ${creator.name}`}
-                      className="w-full h-full object-cover"
+                      src={creator.logoUrl}
+                      alt={`${creator.name} channel logo`}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-border"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
                         if (target.parentElement) {
-                          target.parentElement.classList.add('flex', 'items-center', 'justify-center');
+                          target.parentElement.classList.add('flex', 'items-center', 'justify-center', 'w-12', 'h-12', 'rounded-full', 'bg-muted', 'border-2', 'border-border');
                           const fallback = document.createElement('span');
                           fallback.textContent = creator.name.charAt(0);
-                          fallback.className = 'text-2xl font-bold text-muted-foreground';
+                          fallback.className = 'text-lg font-bold text-muted-foreground';
                           target.parentElement.appendChild(fallback);
                         }
                       }}
                     />
                   </div>
-                  {/* Info */}
-                  <div className="p-2.5 space-y-1.5">
-                    <div className="flex items-start justify-between gap-1">
-                      <p className="font-medium text-xs leading-tight">{creator.name}</p>
-                      <span className="text-xs font-semibold text-muted-foreground shrink-0">
-                        {creator.activityScore}/100
-                      </span>
+                  {/* Channel info */}
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <p className="font-medium text-sm leading-tight truncate">{creator.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {creator.subscribers >= 1_000_000
+                        ? `${(creator.subscribers / 1_000_000).toFixed(1)}M subscribers`
+                        : `${(creator.subscribers / 1_000).toFixed(0)}K subscribers`}
+                    </p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <Badge variant="default" className="text-[10px] px-1.5 py-0">
+                        {creator.reachTier}
+                      </Badge>
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                        YouTube
+                      </Badge>
                     </div>
-                    <Badge variant="default" className="text-[10px] px-1.5 py-0">
-                      {creator.category}
-                    </Badge>
-                    <p className="text-[11px] text-muted-foreground leading-snug">{creator.reason}</p>
                   </div>
                 </div>
               ))}
               <p className="text-[10px] text-muted-foreground text-center pt-2 leading-tight">
-                Actors are selected from a curated list and validated
-                using public YouTube activity.
+                Channels are identified using public reach metrics, not manual selection.
               </p>
             </>
           )}

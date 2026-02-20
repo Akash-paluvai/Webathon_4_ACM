@@ -57,16 +57,38 @@ def _analyse_video(video_path: str) -> Dict[str, Any]:
     # Threshold for histogram diff to count as a scene change.
     SCENE_THRESHOLD = 0.6
 
+    # Load face cascade
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    faces_detected_count = 0
+    frames_with_faces = 0
+
+    # Color warmth (Average R / Average B)
+    total_r = 0.0
+    total_b = 0.0
+
     frame_idx = 0
     while True:
         ret, frame = cap.read()
         if not ret:
             break
 
+        # --- color warmth (sampled) ---
+        if frame_idx % int(fps * 2) == 0:
+            avg_color = np.mean(frame, axis=(0, 1)) # BGR
+            total_b += avg_color[0]
+            total_r += avg_color[2]
+
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         # --- brightness (mean pixel intensity) ---
         brightness_values.append(float(np.mean(gray)))
+
+        # --- face detection (sampled for speed) ---
+        if frame_idx % int(max(1, fps)) == 0: # Check once per second
+            faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+            if len(faces) > 0:
+                frames_with_faces += 1
+                faces_detected_count += len(faces)
 
         # --- scene change detection via histogram correlation ---
         hist = cv2.calcHist([gray], [0], None, [64], [0, 256])
@@ -88,6 +110,19 @@ def _analyse_video(video_path: str) -> Dict[str, Any]:
     avg_shot_length = duration_sec / num_scenes if num_scenes > 0 else duration_sec
     scene_change_freq = len(scene_changes) / duration_sec if duration_sec > 0 else 0.0
     avg_brightness = float(np.mean(brightness_values)) if brightness_values else 0.0
+    
+    # Pacing variance
+    shot_lengths = []
+    last_change = 0
+    for change in scene_changes:
+        shot_lengths.append((change - last_change) / fps)
+        last_change = change
+    shot_lengths.append((total_frames - last_change) / fps)
+    pacing_variance = float(np.var(shot_lengths)) if shot_lengths else 0.0
+
+    face_presence_ratio = frames_with_faces / (duration_sec) if duration_sec > 0 else 0.0
+    
+    color_warmth = total_r / total_b if total_b > 0 else 1.0
 
     return {
         "total_frames": total_frames,
@@ -97,6 +132,9 @@ def _analyse_video(video_path: str) -> Dict[str, Any]:
         "average_shot_length_sec": round(avg_shot_length, 2),
         "scene_change_frequency_per_sec": round(scene_change_freq, 4),
         "average_brightness": round(avg_brightness, 2),
+        "face_presence_ratio": round(min(face_presence_ratio, 1.0), 4),
+        "pacing_variance": round(pacing_variance, 4),
+        "color_warmth": round(color_warmth, 4),
     }
 
 

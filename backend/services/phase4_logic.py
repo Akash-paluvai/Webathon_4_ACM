@@ -140,3 +140,73 @@ def compute_phase4(
         "audienceType": audience_type,
         "audienceInterestScore": final_score,
     }
+
+
+def derive_enhanced_signals(
+    deterministic_features: Dict[str, Any],
+    movinet_features: Dict[str, Any] = None
+) -> Dict[str, str]:
+    """
+    Derive high-level heuristic signals from combined data.
+    """
+    movinet_features = movinet_features or {
+        "actionIntensityScore": 0,
+        "dominantActionClass": "Mixed",
+        "enhancedAnalysisAvailable": False
+    }
+
+    # 1. Violence Likelihood
+    # Heuristic: High motion + Low faces + Dark frames
+    motion_intensity = movinet_features.get("actionIntensityScore", 0)
+    scene_density = deterministic_features.get("scene_change_frequency_per_sec", 0)
+    face_ratio = deterministic_features.get("face_presence_ratio", 0)
+    brightness = deterministic_features.get("average_brightness", 128)
+
+    violence_score = 0
+    if motion_intensity > 60 or scene_density > 0.7:
+        violence_score += 1
+    if face_ratio < 0.15:
+        violence_score += 1
+    if brightness < 90:
+        violence_score += 1
+    
+    violence_likelihood = "LOW"
+    if violence_score == 3:
+        violence_likelihood = "HIGH"
+    elif violence_score >= 1:
+        violence_likelihood = "MEDIUM"
+
+    # 2. Emotional Tone
+    # Heuristic: High faces + Warm colors + Pacing variance
+    color_warmth = deterministic_features.get("color_warmth", 1.0)
+    pacing_var = deterministic_features.get("pacing_variance", 0)
+
+    emo_score = 0
+    if face_ratio > 0.3:
+        emo_score += 1
+    if color_warmth > 1.15:
+        emo_score += 1
+    if pacing_var > 2.0: # Dynamic pacing
+        emo_score += 1
+    
+    emotional_tone = "NEUTRAL"
+    if emo_score >= 2:
+        emotional_tone = "EMOTIONAL"
+    elif emo_score == 0 and color_warmth < 0.9:
+        emotional_tone = "COLD"
+
+    # 3. Genre Inclination
+    # Heuristic: Density + Action Intensity
+    genre_inclination = "MIXED"
+    if (motion_intensity > 50 or scene_density > 0.6) and brightness > 80:
+        genre_inclination = "ACTION-LEANING"
+    elif face_ratio > 0.4 and scene_density < 0.4:
+        genre_inclination = "DRAMA-LEANING"
+
+    return {
+        "violenceLikelihood": violence_likelihood,
+        "emotionalTone": emotional_tone,
+        "genreInclination": genre_inclination,
+        "behavioralDynamics": movinet_features.get("dominantActionClass", "Mixed"),
+        "intensityScore": movinet_features.get("actionIntensityScore", 0)
+    }

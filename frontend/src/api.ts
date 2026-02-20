@@ -126,7 +126,15 @@ export interface Phase4Result {
     testStrategy: string;
     audienceType: string;
     audienceInterestScore: number;
-    trailerFeatures: Record<string, unknown>;
+    trailerFeatures: Record<string, any>;
+    enhancedSignals?: {
+        violenceLikelihood: string;
+        emotionalTone: string;
+        genreInclination: string;
+        behavioralDynamics: string;
+        intensityScore: number;
+    };
+    enhancedAnalysisAvailable: boolean;
 }
 
 export async function submitPhase4(
@@ -153,6 +161,8 @@ export interface AIInsights {
     marketRead: string;
     riskSignals: string;
     strategicRecommendations: string;
+    enhancedAnalysisAvailable?: boolean;
+    enhancedSignals?: Phase4Result['enhancedSignals'];
 }
 
 export async function generatePhase4Insights(
@@ -238,14 +248,14 @@ export async function simulateScenario(
     });
 }
 
-// ── Trending Creators API ──
+// ── High-Reach YouTube Channels API ──
 
 export interface TrendingCreator {
     name: string;
     platform: string;
-    thumbnailUrl: string;
-    activityScore: number;
-    category: string;
+    logoUrl: string;
+    subscribers: number;
+    reachTier: string;
     reason: string;
 }
 

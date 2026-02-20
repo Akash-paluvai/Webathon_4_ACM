@@ -258,9 +258,50 @@ export default function Phase4Page() {
                 <span className={scoreColor(result.audienceInterestScore)}>
                   {result.audienceInterestScore}%
                 </span>
+                {(result.enhancedAnalysisAvailable || insights?.enhancedAnalysisAvailable) && (
+                  <Badge variant="outline" className="border-primary/50 text-primary bg-primary/5 animate-pulse flex items-center gap-1">
+                    <Sparkles className="h-3 w-3" />
+                    Enhanced Video Understanding Applied
+                  </Badge>
+                )}
               </div>
               <Progress value={result.audienceInterestScore} className="h-2" />
             </div>
+
+            <Separator />
+
+            {/* Advanced Signals Section */}
+            {(result.enhancedSignals || insights?.enhancedSignals) && (
+              <div>
+                <p className="text-sm font-medium mb-3 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  Advanced Behavioral Signals
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="bg-primary/5 border border-primary/10 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Violence Likelihood</p>
+                    <p className="text-sm font-bold flex items-center gap-2">
+                      <AlertTriangle className={`h-4 w-4 ${(result.enhancedSignals || insights?.enhancedSignals)?.violenceLikelihood === 'HIGH' ? 'text-red-500' : 'text-muted-foreground'}`} />
+                      {(result.enhancedSignals || insights?.enhancedSignals)?.violenceLikelihood}
+                    </p>
+                  </div>
+                  <div className="bg-primary/5 border border-primary/10 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Emotional Tone</p>
+                    <p className="text-sm font-bold flex items-center gap-2">
+                      <Film className="h-4 w-4 text-purple-500" />
+                      {(result.enhancedSignals || insights?.enhancedSignals)?.emotionalTone}
+                    </p>
+                  </div>
+                  <div className="bg-primary/5 border border-primary/10 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Genre Inclination</p>
+                    <p className="text-sm font-bold flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4 text-blue-500" />
+                      {(result.enhancedSignals || insights?.enhancedSignals)?.genreInclination}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <Separator />
 

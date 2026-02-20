@@ -33,6 +33,13 @@ INPUT DATA:
   - Scene Density (scene changes/sec): {scene_density}
   - Brightness Level: {brightness}/255
   - Audio Energy: {audio_energy}
+  - Face Presence Ratio: {face_ratio}
+  - Color Warmth: {color_warmth}
+- VIDEO DYNAMICS (Derived):
+  - Behavioral Dynamics: {behavioral_dynamics}
+  - Violence Likelihood: {violence_likelihood}
+  - Emotional Tone: {emotional_tone}
+  - Genre Inclination: {genre_inclination}
 - Risk Flags: {risk_flags}
 
 Return EXACTLY this JSON structure:
@@ -49,6 +56,7 @@ def generate_cerebras_insights(
     audience_interest_score: int,
     trailer_features: Dict[str, Any],
     risk_flags: Optional[list] = None,
+    enhanced_signals: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, str]:
     """
     Call Cerebras API to generate AI-driven strategic insights.
@@ -62,10 +70,19 @@ def generate_cerebras_insights(
     avg_shot = trailer_features.get("average_shot_length_sec", "N/A")
     scene_density = trailer_features.get("scene_change_frequency_per_sec", "N/A")
     brightness = trailer_features.get("average_brightness", "N/A")
+    face_ratio = trailer_features.get("face_presence_ratio", "N/A")
+    color_warmth = trailer_features.get("color_warmth", "N/A")
 
     audio_energy = "N/A"
     if trailer_features.get("audio_available", False):
         audio_energy = str(trailer_features.get("audio_energy_mean", "N/A"))
+
+    # Extract enhanced signals
+    enhanced = enhanced_signals or {}
+    behavioral_dynamics = enhanced.get("behavioralDynamics", "Unknown")
+    violence_likelihood = enhanced.get("violenceLikelihood", "LOW")
+    emotional_tone = enhanced.get("emotionalTone", "NEUTRAL")
+    genre_inclination = enhanced.get("genreInclination", "MIXED")
 
     user_prompt = _USER_PROMPT_TEMPLATE.format(
         audience_type=audience_type.upper(),
@@ -75,6 +92,12 @@ def generate_cerebras_insights(
         scene_density=scene_density,
         brightness=brightness,
         audio_energy=audio_energy,
+        face_ratio=face_ratio,
+        color_warmth=color_warmth,
+        behavioral_dynamics=behavioral_dynamics,
+        violence_likelihood=violence_likelihood,
+        emotional_tone=emotional_tone,
+        genre_inclination=genre_inclination,
         risk_flags=", ".join(risk_flags) if risk_flags else "None identified",
     )
 
