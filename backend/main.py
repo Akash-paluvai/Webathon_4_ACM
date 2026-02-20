@@ -47,6 +47,10 @@ app.add_middleware(
 from phase6.routes import router as phase6_router
 app.include_router(phase6_router, prefix="/phase6", tags=["Phase 6"])
 
+# Phase 7 router
+from phase7.routes import router as phase7_router
+app.include_router(phase7_router, prefix="/phase7", tags=["Phase 7"])
+
 
 # ──────────────────────────────────────────────
 # Film Project endpoints

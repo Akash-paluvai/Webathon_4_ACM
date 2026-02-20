@@ -132,3 +132,17 @@ export async function getPhase6Analysis(projectId: ProjectId): Promise<any> {
     }
     return res.json();
 }
+
+// ── Phase 7 Release & Discoverability API ──
+
+export async function getPhase7Timeline(projectId: ProjectId): Promise<any> {
+    const res = await fetch(`/phase7/timeline/${projectId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+        const error = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(error.detail || `API error: ${res.status}`);
+    }
+    return res.json();
+}

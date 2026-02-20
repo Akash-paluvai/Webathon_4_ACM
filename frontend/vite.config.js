@@ -28,6 +28,10 @@ export default defineConfig({
             '/phase6': {
                 target: 'http://127.0.0.1:8000',
                 changeOrigin: true
+            },
+            '/phase7': {
+                target: 'http://127.0.0.1:8000',
+                changeOrigin: true
             }
         }
     },
