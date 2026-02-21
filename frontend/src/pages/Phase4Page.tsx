@@ -84,7 +84,7 @@ export default function Phase4Page() {
     setConfirming(true);
     try {
       await updateProjectPhase(Number(projectId), 5);
-      navigate({ to: '/projects/$projectId', params: { projectId } });
+      navigate({ to: '/projects/$projectId/phase-5', params: { projectId } });
     } catch (err: unknown) {
       setSubmitError(err instanceof Error ? err.message : 'Failed to advance phase');
     } finally {

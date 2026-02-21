@@ -57,7 +57,7 @@ export default function Phase3Page() {
         productionHealth: health,
       });
       await updateProjectPhase(pid, 4);
-      navigate({ to: '/projects/$projectId', params: { projectId } });
+      navigate({ to: '/projects/$projectId/phase-4', params: { projectId } });
     } catch (e: any) { setError(e.message); }
     finally { setConfirming(false); }
   };

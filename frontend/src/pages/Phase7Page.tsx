@@ -380,7 +380,7 @@ export default function Phase7Page() {
     setConfirming(true);
     try {
       await updateProjectPhase(Number(projectId), 8);
-      navigate({ to: '/projects/$projectId', params: { projectId } });
+      navigate({ to: '/projects/$projectId/phase-8', params: { projectId } });
     } catch (err: any) {
       setError(err.message || 'Failed to advance phase');
     } finally {

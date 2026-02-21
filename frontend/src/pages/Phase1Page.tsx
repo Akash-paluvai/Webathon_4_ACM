@@ -54,7 +54,7 @@ export default function Phase1Page() {
     setError(null);
     try {
       await updateProjectPhase(Number(projectId), 2);
-      navigate({ to: '/projects/$projectId', params: { projectId } });
+      navigate({ to: '/projects/$projectId/phase-2', params: { projectId } });
     } catch (err: any) {
       setError(err.message || 'Failed to advance phase.');
     } finally {

@@ -53,7 +53,7 @@ export default function Phase2Page() {
     try {
       await confirmPhase2(pid, { budgetLevel, talentStrategy });
       await updateProjectPhase(pid, 3);
-      navigate({ to: '/projects/$projectId', params: { projectId } });
+      navigate({ to: '/projects/$projectId/phase-3', params: { projectId } });
     } catch (e: any) { setError(e.message); }
     finally { setConfirming(false); }
   };
