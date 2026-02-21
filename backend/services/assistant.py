@@ -5,27 +5,35 @@ Handles phase-aware chat logic using Groq.
 
 import os
 from typing import List, Dict, Any, Optional
+from sqlalchemy.orm import Session
 from partA.script_analysis_model import get_groq_client
+from services.project_summarizer import get_project_summary
 
-_ASSISTANT_MODEL = "llama-3.3-70b-versatile"
+# ... (imports) ...
 
 def chat_with_assistant(
     message: str,
     phase: Optional[str] = None,
-    history: List[Dict[str, str]] = None
+    history: List[Dict[str, str]] = None,
+    project_id: Optional[int] = None,
+    db: Optional[Session] = None
 ) -> str:
     """
-    Generate a response from the FilmFlow Assistant using Groq.
+    Generate a response from the FilmFlow Assistant using Groq, infused with project context.
     """
     client = get_groq_client()
     
     # Base system prompt
     system_prompt = (
-        "You are the FilmFlow Assistant, an AI expert in the film industry. "
-        "You help film producers navigate various phases of production, from script selection to post-release. "
-        "Your tone is professional, helpful, and insightful. "
-        "Provide concise but high-value advice."
+        "You are the FilmFlow Assistant, an expert AI film producer and consultant. "
+        "Your goal is to help users navigate the professional film production pipeline. "
+        "Be concise, insightful, and professional. Use data-driven reasoning where possible."
     )
+    
+    # Project-specific context
+    project_context = ""
+    if project_id and db:
+        project_context = get_project_summary(project_id, db)
     
     # Phase-specific context enhancement
     phase_contexts = {
@@ -39,14 +47,24 @@ def chat_with_assistant(
         "phase-8": "The user is currently in Phase 8 (Post-Release). Focus on revenue tracking, monetization, and sequel potential.",
     }
     
+    context_addon = ""
     if phase and phase in phase_contexts:
-        system_prompt += f"\n\nCONTEXT: {phase_contexts[phase]}"
+        context_addon = f"\n\nCURRENT PHASE CONTEXT: {phase_contexts[phase]}"
     
-    messages = [{"role": "system", "content": system_prompt}]
+    full_system_prompt = (
+        f"{system_prompt}\n\n"
+        f"You have deep memory of the project. Here is the current state of the production:\n\n"
+        f"{project_context}"
+        f"{context_addon}\n\n"
+        f"When answering, reference specific scores (e.g., 'Your 72% discoverability score') or decisions "
+        f"from previous phases to provide integrated advice."
+    )
     
-    # Add history if provided (limit to last 5 messages for context)
+    messages = [{"role": "system", "content": full_system_prompt}]
+    
+    # Add history if provided (limit to last 8 messages for context)
     if history:
-        messages.extend(history[-5:])
+        messages.extend(history[-8:]) 
         
     messages.append({"role": "user", "content": message})
     

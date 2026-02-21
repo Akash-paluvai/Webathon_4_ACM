@@ -26,7 +26,8 @@ import {
   ShieldAlert, TrendingUp, Info, Lightbulb, Users,
   ChevronDown, ChevronUp, FlaskConical, ArrowUpRight, ArrowDownRight,
 } from 'lucide-react';
-import { submitPhase5, fetchTrendingCreators, simulateScenario } from '@/api';
+import { submitPhase5, fetchTrendingCreators, simulateScenario, updateProjectPhase } from '@/api';
+import { ArrowRight } from 'lucide-react';
 import type { Phase5Result, TrendingCreator, ScenarioResult } from '@/api';
 
 export default function Phase5Page() {
@@ -48,6 +49,7 @@ export default function Phase5Page() {
   const [scenarioBudget, setScenarioBudget] = useState<string>('');
   const [scenarioResult, setScenarioResult] = useState<ScenarioResult | null>(null);
   const [scenarioRunning, setScenarioRunning] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     if (!result) return;
@@ -89,6 +91,18 @@ export default function Phase5Page() {
       // silently fail
     } finally {
       setScenarioRunning(false);
+    }
+  };
+
+  const handleConfirmAndAdvance = async () => {
+    setConfirming(true);
+    try {
+      await updateProjectPhase(Number(projectId), 6);
+      navigate({ to: '/projects/$projectId', params: { projectId } });
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to advance phase');
+    } finally {
+      setConfirming(false);
     }
   };
 
@@ -633,6 +647,20 @@ export default function Phase5Page() {
                 </CardContent>
               </Card>
             </>
+          )}
+          {/* Confirm & Advance */}
+          {result && (
+            <div className="flex justify-end mt-8">
+              <Button
+                onClick={handleConfirmAndAdvance}
+                disabled={confirming}
+                size="lg"
+                className="bg-primary hover:bg-primary/90"
+              >
+                {confirming ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArrowRight className="h-4 w-4 mr-2" />}
+                Confirm & Advance to Phase 6
+              </Button>
+            </div>
           )}
         </div>
 

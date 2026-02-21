@@ -10,7 +10,8 @@ import {
   ShieldAlert, Target, Trophy, Ticket, AlertTriangle, Activity,
   BarChart3, Zap, ChevronRight, Sparkles,
 } from 'lucide-react';
-import { getPhase7Timeline } from '@/api';
+import { getPhase7Timeline, updateProjectPhase } from '@/api';
+import { ArrowRight } from 'lucide-react';
 
 const pct = (n: number) => `${Math.round(n * 100)}%`;
 
@@ -365,14 +366,27 @@ export default function Phase7Page() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    getPhase7Timeline(projectId)
+    getPhase7Timeline(Number(projectId))
       .then(setData)
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }, [projectId]);
+
+  const handleConfirmAndAdvance = async () => {
+    setConfirming(true);
+    try {
+      await updateProjectPhase(Number(projectId), 8);
+      navigate({ to: '/projects/$projectId', params: { projectId } });
+    } catch (err: any) {
+      setError(err.message || 'Failed to advance phase');
+    } finally {
+      setConfirming(false);
+    }
+  };
 
   if (loading) return (
     <div className="container mx-auto px-4 py-20 flex flex-col items-center justify-center gap-3">
@@ -483,6 +497,21 @@ export default function Phase7Page() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Confirm & Advance */}
+      {data && (
+        <div className="flex justify-end mt-12 border-t pt-8">
+          <Button
+            onClick={handleConfirmAndAdvance}
+            disabled={confirming}
+            size="lg"
+            className="bg-primary hover:bg-primary/90 min-w-[200px]"
+          >
+            {confirming ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArrowRight className="h-4 w-4 mr-2" />}
+            Confirm & Advance to Phase 8
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

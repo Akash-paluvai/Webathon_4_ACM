@@ -51,6 +51,11 @@ function getPhaseFromPath(path: string): string | null {
     return match ? `phase-${match[1]}` : null;
 }
 
+function getProjectIdFromPath(path: string): number | null {
+    const match = path.match(/\/projects\/(\d+)/);
+    return match ? parseInt(match[1], 10) : null;
+}
+
 export default function ChatBot() {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -122,17 +127,20 @@ export default function ChatBot() {
         setIsTyping(true);
 
         try {
-            // Prepare history for context (last 5 messages)
-            const history = messages.slice(-5).map(m => ({
+            // Prepare history for context (last 8 messages)
+            const history = messages.slice(-8).map(m => ({
                 role: m.sender === 'user' ? 'user' : 'assistant',
                 content: m.text
             }));
 
             const phase = getPhaseFromPath(location.pathname);
+            const projectId = getProjectIdFromPath(location.pathname);
+
             const response = await chatWithAssistant({
                 message: text,
                 phase: phase,
-                history: history
+                history: history,
+                projectId: projectId || undefined
             });
 
             const botResponse: Message = {

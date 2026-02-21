@@ -396,9 +396,54 @@ export async function chatWithAssistant(payload: {
     message: string;
     phase?: string | null;
     history?: { role: string; content: string }[];
+    projectId?: number;
 }): Promise<{ text: string }> {
     return request<{ text: string }>('/assistant/chat', {
         method: 'POST',
         body: JSON.stringify(payload),
+    });
+}
+// ── Phase 8: Post-Release Tracking ──
+
+export interface Phase8Report {
+    movie: {
+        title: string;
+        tmdb_id: number;
+        release_date?: string;
+        genre?: string;
+        budget?: number;
+        revenue?: number;
+    };
+    generated_at: string;
+    sections: Record<string, {
+        value: any;
+        source_type: string;
+        source_name: string;
+        confidence: number;
+        methodology?: string;
+    }>;
+    comparables_used: any[];
+    diagnostics?: any;
+    insights?: any;
+}
+
+export async function getPhase8Report(movieTitle: string): Promise<Phase8Report> {
+    return request<Phase8Report>(`/phase8/report/${encodeURIComponent(movieTitle)}`);
+}
+
+export async function updatePhase8Results(
+    projectId: ProjectId,
+    data: {
+        audienceResponse: string;
+        monetizationOptions: string;
+        learningSummary: string;
+        currentPhase: number;
+    }
+): Promise<FilmProject> {
+    // We use the general update project endpoint but we'll adapt it if needed
+    // For Phase 8 specific save, we might need a dedicated endpoint or partial update
+    return request<FilmProject>(`/projects/${projectId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
     });
 }

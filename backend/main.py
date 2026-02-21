@@ -83,6 +83,7 @@ from routes.phase5 import router as phase5_router
 from routes.marketing import router as marketing_router
 from phase6.routes import router as phase6_router
 from phase7.routes import router as phase7_router
+from phase8.router import phase8_router
 
 @app.get("/api/projects", response_model=List[FilmProjectResponse])
 def list_projects(db: Session = Depends(get_db)):
@@ -148,6 +149,7 @@ app.include_router(phase5_router)
 app.include_router(marketing_router)
 app.include_router(phase6_router, prefix="/phase6", tags=["Phase 6"])
 app.include_router(phase7_router, prefix="/phase7", tags=["Phase 7"])
+app.include_router(phase8_router, prefix="/api/phase8", tags=["Phase 8"])
 
 # ──────────────────────────────────────────────
 # Phase 1 — Concept Exploration
@@ -309,15 +311,16 @@ def add_insight(project_id: int, payload: InsightCreate, db: Session = Depends(g
 # ──────────────────────────────────────────────
 
 @app.post("/api/assistant/chat")
-def assistant_chat(payload: dict):
+def assistant_chat(payload: dict, db: Session = Depends(get_db)):
     message = payload.get("message")
     if not message:
         raise HTTPException(status_code=400, detail="Message required")
     
     phase = payload.get("phase")
+    project_id = payload.get("projectId")
     history = payload.get("history", [])
     
-    response_text = chat_with_assistant(message, phase, history)
+    response_text = chat_with_assistant(message, phase, history, project_id, db)
     return {"text": response_text}
 
 # ──────────────────────────────────────────────

@@ -80,6 +80,9 @@ class FilmProjectResponse(BaseModel):
     primaryMarketingChannel: str
     releaseModel: str
     distributionConfidence: str
+    audienceResponse: Optional[str] = None
+    monetizationOptions: Optional[str] = None
+    learningSummary: Optional[str] = None
     lastUpdated: datetime
 
     model_config = {"from_attributes": True}
@@ -104,6 +107,9 @@ class FilmProjectResponse(BaseModel):
             primaryMarketingChannel=project.primary_marketing_channel,
             releaseModel=project.release_model,
             distributionConfidence=project.distribution_confidence,
+            audienceResponse=project.audience_response,
+            monetizationOptions=project.monetization_options,
+            learningSummary=project.learning_summary,
             lastUpdated=project.last_updated,
         )
 

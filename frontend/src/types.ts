@@ -79,6 +79,9 @@ export interface FilmProject {
     primaryMarketingChannel: PrimaryMarketingChannel;
     releaseModel: ReleaseModel;
     distributionConfidence: DistributionConfidence;
+    audienceResponse?: string;
+    monetizationOptions?: string;
+    learningSummary?: string;
     lastUpdated: string;
 }
 

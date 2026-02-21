@@ -24,6 +24,12 @@ class FilmProject(Base):
     primary_marketing_channel = Column(String(20), nullable=False, default="undefined")  # influencer, festival, digitalAds, pr, undefined
     release_model = Column(String(20), nullable=False)  # theatre, ott, hybrid
     distribution_confidence = Column(String(20), nullable=False)  # low, medium, high
+    
+    # Phase 8: Post-Release Tracking & Monetization
+    audience_response = Column(String(50), nullable=True) # WEAK, MODERATE, STRONG
+    monetization_options = Column(Text, nullable=True) # Serialized JSON or comma-separated
+    learning_summary = Column(Text, nullable=True)
+    
     last_updated = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
     insights = relationship("Insight", back_populates="project", cascade="all, delete-orphan", order_by="Insight.timestamp")

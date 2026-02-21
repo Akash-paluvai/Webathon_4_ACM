@@ -12,7 +12,8 @@ import {
   ChevronRight, Gauge, Star, Download, Languages, Activity, PieChart,
   Calendar, Swords, ArrowLeftRight,
 } from 'lucide-react';
-import { getPhase6Analysis } from '@/api';
+import { getPhase6Analysis, updateProjectPhase } from '@/api';
+import { ArrowRight } from 'lucide-react';
 import { ReleaseTimingPanel, CompetitionPanel, SimulationPanel } from '@/components/Phase6Panels';
 
 // Leaflet imports
@@ -534,6 +535,7 @@ export default function Phase6Page() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     setLoading(true); setError(null);
@@ -552,6 +554,18 @@ export default function Phase6Page() {
       URL.revokeObjectURL(url);
     } catch { /* ignore */ }
     setExporting(false);
+  };
+
+  const handleConfirmAndAdvance = async () => {
+    setConfirming(true);
+    try {
+      await updateProjectPhase(Number(projectId), 7);
+      navigate({ to: '/projects/$projectId', params: { projectId } });
+    } catch (err: any) {
+      setError(err.message || 'Failed to advance phase');
+    } finally {
+      setConfirming(false);
+    }
   };
 
   if (loading) return (
@@ -645,6 +659,21 @@ export default function Phase6Page() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Confirm & Advance */}
+      {data && (
+        <div className="flex justify-end mt-12 border-t pt-8">
+          <Button
+            onClick={handleConfirmAndAdvance}
+            disabled={confirming}
+            size="lg"
+            className="bg-primary hover:bg-primary/90 min-w-[200px]"
+          >
+            {confirming ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArrowRight className="h-4 w-4 mr-2" />}
+            Confirm & Advance to Phase 7
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

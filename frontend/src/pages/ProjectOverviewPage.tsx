@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, ChevronRight } from 'lucide-react';
 import { useGetProject } from '@/hooks/useQueries';
+import { PhaseTimeline } from '@/components/PhaseTimeline';
 
 /**
  * Project Overview Page
@@ -75,6 +76,11 @@ export default function ProjectOverviewPage() {
           </Badge>
         </div>
         <p className="text-muted-foreground text-lg">{project.genre} • {project.language}</p>
+      </div>
+
+      {/* Interactive Horizontal Timeline */}
+      <div className="mb-10 overflow-hidden">
+        <PhaseTimeline projectId={projectId} currentPhase={Number(project.currentPhase)} />
       </div>
 
       <div className="grid md:grid-cols-2 gap-6 mb-8">
@@ -151,14 +157,14 @@ export default function ProjectOverviewPage() {
               <Button
                 key={phase.number}
                 variant={Number(project.currentPhase) === phase.number ? 'default' : 'outline'}
-                className="justify-between h-auto py-4 px-6"
+                className="justify-between h-auto py-4 px-6 group"
                 onClick={() => navigate({ to: phase.path as any })}
               >
-                <div className="text-left">
+                <div className="text-left text-wrap max-w-72">
                   <div className="font-semibold">Phase {phase.number}</div>
                   <div className="text-sm font-normal opacity-90">{phase.name}</div>
                 </div>
-                <ChevronRight className="h-5 w-5 ml-2 flex-shrink-0" />
+                <ChevronRight className="h-5 w-5 ml-2 flex-shrink-0 group-hover:translate-x-1 transition-transform" />
               </Button>
             ))}
           </div>

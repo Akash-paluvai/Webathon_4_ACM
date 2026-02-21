@@ -1,24 +1,5 @@
 /**
  PHASE 4 — Post-Production & Market Testing
-
-Inputs:
-- Trailer video (MP4)
-- testStrategy: FESTIVAL | PRIVATE | DIGITAL
-
-Reads from FilmProject:
-- genre, scale, productionHealth
-
-Writes to FilmProject:
-- audienceType (persisted)
-
-Returned in response only (NOT persisted):
-- audienceInterestScore
-- testStrategy
-
-Does NOT:
-- train ML models
-- predict CTR
-- modify schema
  */
 
 import { useState, useRef } from 'react';
@@ -30,8 +11,8 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Upload, Sparkles, Film, BarChart3, AlertTriangle, Loader2 } from 'lucide-react';
-import { submitPhase4, generatePhase4Insights } from '@/api';
+import { ArrowLeft, Upload, Sparkles, Film, BarChart3, AlertTriangle, Loader2, ArrowRight } from 'lucide-react';
+import { submitPhase4, generatePhase4Insights, updateProjectPhase } from '@/api';
 import type { Phase4Result, AIInsights } from '@/api';
 
 export default function Phase4Page() {
@@ -52,6 +33,7 @@ export default function Phase4Page() {
   const [insights, setInsights] = useState<AIInsights | null>(null);
   const [insightsLoading, setInsightsLoading] = useState(false);
   const [insightsError, setInsightsError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   // ── Handlers ──
 
@@ -95,6 +77,18 @@ export default function Phase4Page() {
       setInsightsError(err instanceof Error ? err.message : 'Insight generation failed');
     } finally {
       setInsightsLoading(false);
+    }
+  };
+
+  const handleConfirmAndAdvance = async () => {
+    setConfirming(true);
+    try {
+      await updateProjectPhase(Number(projectId), 5);
+      navigate({ to: '/projects/$projectId', params: { projectId } });
+    } catch (err: unknown) {
+      setSubmitError(err instanceof Error ? err.message : 'Failed to advance phase');
+    } finally {
+      setConfirming(false);
     }
   };
 
@@ -370,7 +364,7 @@ export default function Phase4Page() {
 
       {/* ── AI-Generated Insights Card ── */}
       {insights && (
-        <Card>
+        <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5" />
@@ -412,6 +406,21 @@ export default function Phase4Page() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Confirm & Advance */}
+      {result && (
+        <div className="flex justify-end mt-8">
+          <Button
+            onClick={handleConfirmAndAdvance}
+            disabled={confirming}
+            size="lg"
+            className="bg-primary hover:bg-primary/90"
+          >
+            {confirming ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArrowRight className="h-4 w-4 mr-2" />}
+            Confirm & Advance to Phase 5
+          </Button>
+        </div>
       )}
     </div>
   );
