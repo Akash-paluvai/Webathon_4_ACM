@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from database import engine, get_db, Base
 from models import FilmProject, Insight
 import phase6_models  # registers Phase 6 tables
+import signal_models  # registers signal pipeline tables
 
 from schemas import (
     FilmProjectCreate, FilmProjectUpdate, PhaseUpdate,
@@ -51,6 +52,11 @@ async def lifespan(app: FastAPI):
         seed_all(db)
     finally:
         db.close()
+
+    # Start background signal pipeline
+    from core.background_tasks import start_signal_pipeline
+    start_signal_pipeline()
+
     yield
 
 # ──────────────────────────────────────────────

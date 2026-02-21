@@ -299,6 +299,19 @@ export async function getPhase7Timeline(projectId: ProjectId): Promise<any> {
     }
     return res.json();
 }
+
+export async function getPhase7Demand(projectId: ProjectId): Promise<any> {
+    const res = await fetch(`/phase7/demand/${projectId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+        const error = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(error.detail || `API error: ${res.status}`);
+    }
+    return res.json();
+}
+
 // ── Phase 1: Concept Intelligence ──
 
 export async function analyzePhase1(payload: {

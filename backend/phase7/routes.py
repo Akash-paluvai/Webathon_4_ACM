@@ -1,7 +1,7 @@
 """
 Phase 7 Routes — Release & Discoverability Engine.
 
-14 Endpoints:
+15 Endpoints:
     POST /phase7/discoverability/{film_id}
     POST /phase7/sensitivity/{film_id}
     POST /phase7/simulate
@@ -16,6 +16,7 @@ Phase 7 Routes — Release & Discoverability Engine.
     POST /phase7/festival-impact/{film_id}
     POST /phase7/ticket-pricing/{film_id}
     POST /phase7/market-shock/{film_id}
+    POST /phase7/demand/{film_id}        ← NEW: Demand Intelligence
 """
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -37,6 +38,7 @@ from phase7.services.conversion_engine import predict_conversion
 from phase7.services.festival_impact import predict_festival_impact
 from phase7.services.ticket_pricing import compute_ticket_pricing
 from phase7.services.market_shock import detect_market_shocks
+from phase7.services.demand_engine import compute_demand_intelligence
 
 router = APIRouter()
 
@@ -126,6 +128,18 @@ def timeline_endpoint(film_id: int, db: Session = Depends(get_db)):
     recovery = compute_recovery(intel, disco["score"])
     confidence = compute_confidence(intel, disco["score"], sensitivity["total_sensitivity"])
 
+    # Demand intelligence summary (non-breaking addition)
+    try:
+        demand = compute_demand_intelligence(intel)
+        demand_summary = {
+            "dsi_score": demand["dsi"]["score"],
+            "dsi_grade": demand["dsi"]["grade"],
+            "demand_trend": demand["demand_trend"]["trend"],
+            "revenue_class": demand["forecast"]["revenue_class"],
+        }
+    except Exception:
+        demand_summary = None
+
     return {
         "project_id": film_id,
         "discoverability": disco,
@@ -140,6 +154,7 @@ def timeline_endpoint(film_id: int, db: Session = Depends(get_db)):
         "market_shocks": shocks,
         "recovery": recovery,
         "sensitivity": sensitivity,
+        "demand_intelligence": demand_summary,
     }
 
 
@@ -254,3 +269,14 @@ def ticket_pricing_endpoint(film_id: int, db: Session = Depends(get_db)):
 def market_shock_endpoint(film_id: int, db: Session = Depends(get_db)):
     intel = _get_intel(film_id, db)
     return {"project_id": film_id, **detect_market_shocks(intel)}
+
+
+# ══════════════════════════════════════════════════════════════
+# 15. DEMAND INTELLIGENCE
+# ══════════════════════════════════════════════════════════════
+
+@router.post("/demand/{film_id}")
+def demand_endpoint(film_id: int, db: Session = Depends(get_db)):
+    intel = _get_intel(film_id, db)
+    demand = compute_demand_intelligence(intel)
+    return {"project_id": film_id, **demand}

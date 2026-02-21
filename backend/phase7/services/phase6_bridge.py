@@ -96,3 +96,28 @@ def fetch_phase6_intel(project_id: int, db: Session) -> Dict:
         "dubbing_result": dubbing,
         "deals": pipeline["deals"],
     }
+
+    # ── Enrich with dynamic signal cache (if available) ──
+    try:
+        from signal_models import SignalCache
+        cached = db.query(SignalCache).filter_by(film_id=project_id).all()
+        if cached:
+            avg_momentum = sum(c.momentum for c in cached) / len(cached)
+            avg_velocity = sum(c.velocity for c in cached) / len(cached)
+            avg_reddit = sum(c.reddit for c in cached) / len(cached)
+            latest_update = max((c.updated_at for c in cached if c.updated_at), default=None)
+            has_live = any(c.source == "live" for c in cached)
+
+            result["live_momentum"] = round(avg_momentum, 4)
+            result["live_velocity"] = round(avg_velocity, 4)
+            result["reddit_score"] = round(avg_reddit, 4)
+            result["signal_freshness"] = latest_update.isoformat() if latest_update else None
+            result["has_live_signals"] = has_live
+
+            # Boost hype_momentum with live momentum if positive
+            if avg_momentum > 0:
+                result["hype_momentum"] = round(min(1.0, result["hype_momentum"] + avg_momentum * 0.3), 4)
+    except Exception:
+        pass  # Graceful — pipeline may not have run yet
+
+    return result

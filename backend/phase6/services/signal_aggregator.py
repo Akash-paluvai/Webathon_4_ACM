@@ -7,12 +7,13 @@ Live signal sources (with graceful fallback):
   - YouTube    (Data API v3)
   - Google Trends (pytrends)
   - TMDB       (trending + genre popularity)
+  - Reddit     (OAuth API)
   - Heuristic  (genre/language/scale-based historical proxy)
 
 Each signal is computed per-region, then combined into a composite RIS.
 All values normalized to 0–1. Geo coordinates attached.
 
-RIS = 0.30 * Twitter + 0.25 * YouTube + 0.20 * Trends + 0.15 * Popularity + 0.10 * GenreHistorical
+RIS = 0.25 * Twitter + 0.20 * YouTube + 0.15 * Trends + 0.15 * Reddit + 0.15 * Popularity + 0.10 * GenreHistorical
 """
 
 import time
@@ -24,13 +25,15 @@ from phase6.services.twitter_signal import fetch_twitter_signal
 from phase6.services.youtube_signal import fetch_youtube_signals_batch
 from phase6.services.trends_signal import fetch_trends_signal
 from phase6.services.popularity_signal import fetch_popularity_signals_batch
+from phase6.services.reddit_signal import fetch_reddit_signals_batch
 from phase6.services.geo_service import fetch_coordinates
 
 # ── Signal Weights (updated per spec) ────────────────────────
 SIGNAL_WEIGHTS = {
-    "twitter": 0.30,
-    "youtube": 0.25,
-    "trends": 0.20,
+    "twitter": 0.25,
+    "youtube": 0.20,
+    "trends": 0.15,
+    "reddit": 0.15,
     "popularity": 0.15,
     "genre_historical": 0.10,
 }
@@ -147,6 +150,11 @@ def compute_signals(
             except Exception:
                 pass
 
+        try:
+            live_reddit = fetch_reddit_signals_batch(title, regions)
+        except Exception:
+            live_reddit = {}
+
     # ── Heuristic engine (always available) ──────────────────
     genre_boost = GENRE_SIGNAL_BOOST.get(genre, DEFAULT_GENRE_BOOST)
     lang_key = language.lower()
@@ -195,11 +203,18 @@ def compute_signals(
         # Spotify (heuristic)
         spotify = round(min(1.0, genre_boost["spotify"] * 0.60 + lang_buzz * 0.40), 4)
 
-        # ── Composite RIS (new formula) ──────────────────────
+        # Reddit
+        rd_live = live_reddit.get(region, {}).get("normalized_score") if 'live_reddit' in dir() else None
+        rd_heuristic = round(min(1.0, (lang_buzz * 0.40 + velocity_base * 0.30
+                                       + genre_boost.get("twitter", 0.5) * 0.30) * penetration), 4)
+        rd = _blend(rd_live, rd_heuristic)
+
+        # ── Composite RIS (updated formula with Reddit) ──────
         ris = round(
             SIGNAL_WEIGHTS["twitter"] * tw
             + SIGNAL_WEIGHTS["youtube"] * yt
             + SIGNAL_WEIGHTS["trends"] * tr
+            + SIGNAL_WEIGHTS["reddit"] * rd
             + SIGNAL_WEIGHTS["popularity"] * pop
             + SIGNAL_WEIGHTS["genre_historical"] * genre_hist,
             4,
@@ -224,6 +239,7 @@ def compute_signals(
             live_twitter.get(region, {}).get("source") == "live",
             live_trends.get(region, {}).get("source") == "live",
             live_popularity.get(region, {}).get("source") == "live",
+            live_reddit.get(region, {}).get("source") == "live" if 'live_reddit' in dir() else False,
         ])
 
         results.append({
@@ -233,6 +249,7 @@ def compute_signals(
             "youtube": yt,
             "twitter": tw,
             "trends": tr,
+            "reddit": rd,
             "imdb": imdb,
             "spotify": spotify,
             "sentiment": sentiment,
@@ -298,3 +315,51 @@ def compute_cross_language_demand(signals: List[Dict], native_language: str) -> 
     total_ris = sum(s["RIS"] for s in signals)
     non_native_ris = sum(s["RIS"] for s in signals if s["region"] not in native_regions)
     return round(non_native_ris / max(0.01, total_ris), 4)
+
+
+def compute_signals_from_db(film_id: int, db=None) -> List[Dict]:
+    """
+    Read latest cached signals from the signal_cache table.
+    Fast path for user-facing endpoints — no API calls.
+    Falls back to empty list if no cached signals exist.
+    """
+    if db is None:
+        return []
+
+    try:
+        from signal_models import SignalCache
+        from phase6.services.geo_service import fetch_coordinates
+
+        cached = db.query(SignalCache).filter_by(film_id=film_id).all()
+        if not cached:
+            return []
+
+        results = []
+        for row in cached:
+            lat, lon = fetch_coordinates(row.region)
+            results.append({
+                "region": row.region,
+                "lat": lat,
+                "lon": lon,
+                "youtube": row.youtube,
+                "twitter": row.twitter,
+                "trends": row.trends,
+                "reddit": row.reddit,
+                "tmdb": row.tmdb,
+                "imdb": 0.5,  # kept as heuristic
+                "spotify": 0.5,
+                "sentiment": row.sentiment,
+                "RIS": row.composite_ris,
+                "engagement_velocity": abs(row.velocity),
+                "trend_direction": "up" if row.momentum > 0.02 else "down",
+                "momentum": row.momentum,
+                "velocity": row.velocity,
+                "source": row.source,
+                "piracy": row.piracy,
+                "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+            })
+
+        results.sort(key=lambda x: x["RIS"], reverse=True)
+        return results
+    except Exception:
+        return []
