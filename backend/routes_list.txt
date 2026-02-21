@@ -1,0 +1,45 @@
+Path: /openapi.json, Methods: {'GET', 'HEAD'}
+Path: /docs, Methods: {'GET', 'HEAD'}
+Path: /docs/oauth2-redirect, Methods: {'GET', 'HEAD'}
+Path: /redoc, Methods: {'GET', 'HEAD'}
+Path: /api/projects/{project_id}/phase/4, Methods: {'POST'}
+Path: /api/projects/{project_id}/phase/4/insights, Methods: {'POST'}
+Path: /api/projects/{project_id}/phase/5, Methods: {'POST'}
+Path: /api/projects/{project_id}/phase/5/scenario, Methods: {'POST'}
+Path: /api/marketing/trending-creators, Methods: {'GET'}
+Path: /phase6/platform-fit, Methods: {'POST'}
+Path: /phase6/regional-hype, Methods: {'POST'}
+Path: /phase6/regional-demand, Methods: {'POST'}
+Path: /phase6/dubbing-analysis, Methods: {'POST'}
+Path: /phase6/deal, Methods: {'POST'}
+Path: /phase6/deal-benchmark, Methods: {'POST'}
+Path: /phase6/pitch-pack, Methods: {'POST'}
+Path: /phase6/intelligence, Methods: {'POST'}
+Path: /phase6/analyze, Methods: {'POST'}
+Path: /phase6/release-timing, Methods: {'POST'}
+Path: /phase6/competition-intel, Methods: {'POST'}
+Path: /phase6/simulate-release, Methods: {'POST'}
+Path: /phase7/discoverability/{film_id}, Methods: {'POST'}
+Path: /phase7/sensitivity/{film_id}, Methods: {'POST'}
+Path: /phase7/simulate, Methods: {'POST'}
+Path: /phase7/timeline/{film_id}, Methods: {'POST'}
+Path: /phase7/optimize/{film_id}, Methods: {'POST'}
+Path: /phase7/visibility-risk/{film_id}, Methods: {'POST'}
+Path: /phase7/momentum/{film_id}, Methods: {'POST'}
+Path: /phase7/budget-optimize/{film_id}, Methods: {'POST'}
+Path: /phase7/recovery/{film_id}, Methods: {'POST'}
+Path: /phase7/barriers/{film_id}, Methods: {'POST'}
+Path: /phase7/conversion/{film_id}, Methods: {'POST'}
+Path: /phase7/festival-impact/{film_id}, Methods: {'POST'}
+Path: /phase7/ticket-pricing/{film_id}, Methods: {'POST'}
+Path: /phase7/market-shock/{film_id}, Methods: {'POST'}
+Path: /api/phase1/analyze, Methods: {'POST'}
+Path: /api/phase1/confirm, Methods: {'POST'}
+Path: /api/projects, Methods: {'GET'}
+Path: /api/projects, Methods: {'POST'}
+Path: /api/projects/{project_id}, Methods: {'GET'}
+Path: /api/projects/{project_id}, Methods: {'PUT'}
+Path: /api/projects/{project_id}/phase, Methods: {'PATCH'}
+Path: /api/projects/{project_id}/insights, Methods: {'GET'}
+Path: /api/projects/{project_id}/insights, Methods: {'POST'}
+Path: /api/health, Methods: {'GET'}

@@ -15,8 +15,17 @@ from groq import Groq
 
 load_dotenv()
 
-# -- Groq client (singleton) --
-_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+# -- Groq client (lazy initialization) --
+_client = None
+
+def get_groq_client():
+    global _client
+    if _client is None:
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            raise ValueError("GROQ_API_KEY environment variable not set")
+        _client = Groq(api_key=api_key)
+    return _client
 
 _ANALYSIS_PROMPT = """You are an expert film industry analyst and script evaluator.
 
@@ -85,7 +94,8 @@ def analyze_script_text(script_text: str, genre: str = "Drama", theme: str = "",
     )
 
     try:
-        response = _client.chat.completions.create(
+        client = get_groq_client()
+        response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,

@@ -389,3 +389,16 @@ export async function confirmPhase3(projectId: ProjectId, payload: {
         body: JSON.stringify(payload),
     });
 }
+
+// ── Assistant API ──
+
+export async function chatWithAssistant(payload: {
+    message: string;
+    phase?: string | null;
+    history?: { role: string; content: string }[];
+}): Promise<{ text: string }> {
+    return request<{ text: string }>('/assistant/chat', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+}

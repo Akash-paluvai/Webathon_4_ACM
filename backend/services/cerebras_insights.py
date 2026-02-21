@@ -9,11 +9,8 @@ Uses ONLY the provided input context — no external data, no DB writes.
 
 import json
 import os
-import urllib.request
 from typing import Any, Dict, Optional
-
-_API_KEY = os.getenv("CEREBRAS_API_KEY", "")
-_API_URL = "https://api.cerebras.ai/v1/chat/completions"
+from partA.script_analysis_model import get_groq_client
 
 _SYSTEM_PROMPT = (
     "You are a senior film marketing strategist advising a producer before release. "
@@ -59,12 +56,14 @@ def generate_cerebras_insights(
     enhanced_signals: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, str]:
     """
-    Call Cerebras API to generate AI-driven strategic insights.
+    Call Groq API (fallback for Cerebras) to generate AI-driven strategic insights.
     Returns dict with marketRead, riskSignals, strategicRecommendations.
     Falls back to error message on failure.
     """
-    if not _API_KEY:
-        return _fallback("Cerebras API key not configured")
+    try:
+        client = get_groq_client()
+    except Exception as e:
+        return _fallback(f"Groq client initialization failed: {str(e)}")
 
     # Extract trailer feature values with safe defaults
     avg_shot = trailer_features.get("average_shot_length_sec", "N/A")
@@ -101,40 +100,20 @@ def generate_cerebras_insights(
         risk_flags=", ".join(risk_flags) if risk_flags else "None identified",
     )
 
-    payload = json.dumps({
-        "model": "llama-4-scout-17b-16e-instruct",
-        "messages": [
-            {"role": "system", "content": _SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt},
-        ],
-        "max_tokens": 500,
-        "temperature": 0.4,
-    }).encode("utf-8")
-
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {_API_KEY}",
-    }
-
     try:
-        req = urllib.request.Request(_API_URL, data=payload, headers=headers)
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            data = json.loads(resp.read().decode())
-    except Exception as e:
-        return _fallback(f"Cerebras API request failed: {str(e)}")
-
-    # Parse the response
-    try:
-        content = data["choices"][0]["message"]["content"]
-        # Strip any markdown code fences if present
-        content = content.strip()
-        if content.startswith("```"):
-            content = content.split("\n", 1)[1] if "\n" in content else content[3:]
-        if content.endswith("```"):
-            content = content[:-3]
-        content = content.strip()
-
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": _SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.4,
+            max_tokens=600,
+        )
+        content = response.choices[0].message.content.strip()
         parsed = json.loads(content)
+        
         return {
             "marketRead": parsed.get("marketRead", "No market read available."),
             "riskSignals": parsed.get("riskSignals", "No risk signals identified."),
@@ -142,8 +121,8 @@ def generate_cerebras_insights(
                 "strategicRecommendations", "No recommendations available."
             ),
         }
-    except (json.JSONDecodeError, KeyError, IndexError) as e:
-        return _fallback(f"Failed to parse Cerebras response: {str(e)}")
+    except Exception as e:
+        return _fallback(f"Groq API error: {str(e)}")
 
 
 def _fallback(reason: str) -> Dict[str, str]:

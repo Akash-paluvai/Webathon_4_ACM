@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from '@tanstack/react-router';
+import { chatWithAssistant } from '../api';
 
 interface Message {
     id: number;
@@ -55,6 +56,7 @@ export default function ChatBot() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState('');
     const [currentPhase, setCurrentPhase] = useState<string | null>(null);
+    const [isTyping, setIsTyping] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const location = useLocation();
@@ -90,12 +92,12 @@ export default function ChatBot() {
                 },
             ]);
         }
-    }, []);
+    }, [messages.length]);
 
     // Scroll to bottom on new messages
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+    }, [messages, isTyping]);
 
     // Focus input when chat opens
     useEffect(() => {
@@ -104,9 +106,9 @@ export default function ChatBot() {
         }
     }, [isOpen]);
 
-    const handleSend = () => {
+    const handleSend = async () => {
         const text = inputValue.trim();
-        if (!text) return;
+        if (!text || isTyping) return;
 
         const userMessage: Message = {
             id: Date.now(),
@@ -117,21 +119,41 @@ export default function ChatBot() {
 
         setMessages((prev) => [...prev, userMessage]);
         setInputValue('');
+        setIsTyping(true);
 
-        // Placeholder bot response
-        setTimeout(() => {
+        try {
+            // Prepare history for context (last 5 messages)
+            const history = messages.slice(-5).map(m => ({
+                role: m.sender === 'user' ? 'user' : 'assistant',
+                content: m.text
+            }));
+
             const phase = getPhaseFromPath(location.pathname);
-            const phaseLabel = phase ? phaseGreetings[phase]?.title : null;
+            const response = await chatWithAssistant({
+                message: text,
+                phase: phase,
+                history: history
+            });
+
             const botResponse: Message = {
                 id: Date.now() + 1,
-                text: phaseLabel
-                    ? `Thanks for your message about "${text}". The ${phaseLabel} AI assistant is not yet connected. This feature will use an LLM to provide phase-specific insights and recommendations.`
-                    : `Thanks for your message! The AI assistant is not yet connected. Navigate to a project phase for phase-specific guidance.`,
+                text: response.text,
                 sender: 'bot',
                 timestamp: new Date(),
             };
+
             setMessages((prev) => [...prev, botResponse]);
-        }, 600);
+        } catch (error) {
+            const botError: Message = {
+                id: Date.now() + 1,
+                text: "I'm having trouble connecting to my brain right now. Please try again later.",
+                sender: 'bot',
+                timestamp: new Date(),
+            };
+            setMessages((prev) => [...prev, botError]);
+        } finally {
+            setIsTyping(false);
+        }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -149,8 +171,8 @@ export default function ChatBot() {
             {/* Chat Panel */}
             <div
                 className={`fixed bottom-20 left-5 z-50 transition-all duration-300 ease-in-out ${isOpen
-                        ? 'opacity-100 translate-y-0 pointer-events-auto'
-                        : 'opacity-0 translate-y-4 pointer-events-none'
+                    ? 'opacity-100 translate-y-0 pointer-events-auto'
+                    : 'opacity-0 translate-y-4 pointer-events-none'
                     }`}
             >
                 <div className="w-[380px] h-[520px] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden">
@@ -201,14 +223,23 @@ export default function ChatBot() {
                             >
                                 <div
                                     className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.sender === 'user'
-                                            ? 'bg-[#7c2d12] text-white rounded-br-md'
-                                            : 'bg-muted text-foreground rounded-bl-md'
+                                        ? 'bg-[#7c2d12] text-white rounded-br-md'
+                                        : 'bg-muted text-foreground rounded-bl-md'
                                         }`}
                                 >
                                     {msg.text}
                                 </div>
                             </div>
                         ))}
+                        {isTyping && (
+                            <div className="flex justify-start">
+                                <div className="bg-muted text-foreground rounded-2xl rounded-bl-md px-4 py-3 text-sm flex gap-1 items-center">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-foreground/40 animate-bounce" style={{ animationDelay: '0s' }} />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-foreground/40 animate-bounce" style={{ animationDelay: '0.2s' }} />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-foreground/40 animate-bounce" style={{ animationDelay: '0.4s' }} />
+                                </div>
+                            </div>
+                        )}
                         <div ref={messagesEndRef} />
                     </div>
 
@@ -243,8 +274,8 @@ export default function ChatBot() {
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={`fixed bottom-5 left-5 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 ${isOpen
-                        ? 'bg-[#7c2d12] rotate-0'
-                        : 'bg-gradient-to-br from-[#7c2d12] to-[#9a3412] animate-[bounce-subtle_3s_ease-in-out_infinite]'
+                    ? 'bg-[#7c2d12] rotate-0'
+                    : 'bg-gradient-to-br from-[#7c2d12] to-[#9a3412] animate-[bounce-subtle_3s_ease-in-out_infinite]'
                     }`}
             >
                 {isOpen ? (
