@@ -9,7 +9,8 @@ from sqlalchemy.orm import Session
 from partA.script_analysis_model import get_groq_client
 from services.project_summarizer import get_project_summary
 
-# ... (imports) ...
+# Constants
+_ASSISTANT_MODEL = "llama-3.3-70b-versatile"
 
 def chat_with_assistant(
     message: str,
