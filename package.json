@@ -15,5 +15,8 @@
     },
     "devDependencies": {
         "sharp": "^0.34.4"
+    },
+    "dependencies": {
+        "@kinde-oss/kinde-auth-react": "^5.11.0"
     }
 }

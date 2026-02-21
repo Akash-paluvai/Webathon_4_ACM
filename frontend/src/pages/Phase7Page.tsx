@@ -8,9 +8,10 @@ import { Separator } from '@/components/ui/separator';
 import {
   ArrowLeft, Loader2, AlertCircle, Gauge, Eye, TrendingUp, Wallet,
   ShieldAlert, Target, Trophy, Ticket, AlertTriangle, Activity,
-  BarChart3, Zap, ChevronRight, Sparkles,
+  BarChart3, Zap, ChevronRight, Sparkles, Flame, ArrowUpRight,
+  ArrowRight, ArrowDownRight, Globe, Lock, Star, Brain,
 } from 'lucide-react';
-import { getPhase7Timeline } from '@/api';
+import { getPhase7Timeline, getPhase7Demand } from '@/api';
 
 const pct = (n: number) => `${Math.round(n * 100)}%`;
 
@@ -355,6 +356,251 @@ function RecoveryCard({ recovery }: { recovery: any }) {
   );
 }
 
+// ── DSI Gauge Component ───────────────────────────────────
+function DSIGauge({ dsi }: { dsi: any }) {
+  const score = dsi?.score ?? 50;
+  const grade = dsi?.grade ?? 'C';
+  const pctVal = score / 100;
+  const circumference = 2 * Math.PI * 52;
+  const dashOffset = circumference * (1 - pctVal * 0.75); // 270deg arc
+  const color = score >= 75 ? '#22c55e' : score >= 55 ? '#3b82f6' : score >= 40 ? '#f59e0b' : '#ef4444';
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg flex items-center gap-2"><Brain className="h-5 w-5" /> Demand Strength Index</CardTitle>
+        <CardDescription>Pre-release audience demand score</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col items-center gap-4">
+        <div className="relative w-36 h-36">
+          <svg viewBox="0 0 120 120" className="w-full h-full -rotate-[135deg]">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="#e5e7eb" strokeWidth="10" strokeDasharray={`${circumference * 0.75} ${circumference * 0.25}`} />
+            <circle cx="60" cy="60" r="52" fill="none" stroke={color} strokeWidth="10" strokeLinecap="round" strokeDasharray={`${circumference * 0.75} ${circumference * 0.25}`} strokeDashoffset={dashOffset} className="transition-all duration-1000" />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-3xl font-bold" style={{ color }}>{score}</span>
+            <Badge variant="outline" className="text-xs mt-1" style={{ borderColor: color, color }}>{grade}</Badge>
+          </div>
+        </div>
+        {/* Breakdown */}
+        <div className="w-full space-y-2">
+          {dsi?.breakdown && Object.entries(dsi.breakdown).map(([k, v]: [string, any]) => (
+            <div key={k} className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground w-32 capitalize">{k.replace(/_/g, ' ')}</span>
+              <div className="flex-1 bg-muted rounded-full h-2">
+                <div className="h-2 rounded-full transition-all" style={{ width: `${Math.min(100, (v / 30) * 100)}%`, backgroundColor: color }} />
+              </div>
+              <span className="font-medium w-10 text-right">{typeof v === 'number' ? v.toFixed(1) : v}</span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Demand Trend Card ─────────────────────────────────────
+function DemandTrendCard({ trend, hypeQuality }: { trend: any; hypeQuality: any }) {
+  const icon = trend?.trend === 'rising' ? <ArrowUpRight className="h-5 w-5 text-green-500" />
+    : trend?.trend === 'declining' ? <ArrowDownRight className="h-5 w-5 text-red-500" />
+      : <ArrowRight className="h-5 w-5 text-yellow-500" />;
+  const trendColor = trend?.trend === 'rising' ? 'text-green-600' : trend?.trend === 'declining' ? 'text-red-600' : 'text-yellow-600';
+  const hypeColor = hypeQuality?.classification === 'genuine' ? 'bg-green-500/10 text-green-700 border-green-200'
+    : hypeQuality?.classification === 'manufactured' ? 'bg-red-500/10 text-red-700 border-red-200'
+      : 'bg-yellow-500/10 text-yellow-700 border-yellow-200';
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg flex items-center gap-2"><TrendingUp className="h-5 w-5" /> Demand Trend & Hype Quality</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-3">
+          {icon}
+          <div>
+            <p className={`font-semibold capitalize ${trendColor}`}>{trend?.trend ?? 'stable'}</p>
+            <p className="text-sm text-muted-foreground">{trend?.description}</p>
+          </div>
+        </div>
+        <Separator />
+        <div className="flex items-center gap-3">
+          <Flame className="h-5 w-5 text-orange-500" />
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-medium">Hype Quality:</span>
+              <Badge className={hypeColor}>{hypeQuality?.classification ?? 'mixed'}</Badge>
+              <span className="text-xs text-muted-foreground">{pct(hypeQuality?.confidence ?? 0.5)} confidence</span>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">{hypeQuality?.description}</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Forecast Panel ────────────────────────────────────────
+function ForecastPanel({ forecast }: { forecast: any }) {
+  const curve = forecast?.demand_curve_30d ?? [];
+  const maxDemand = Math.max(...curve.map((p: any) => p.demand), 0.01);
+  const revenueColor = forecast?.revenue_class === 'blockbuster' ? 'text-green-500' : forecast?.revenue_class === 'hit' ? 'text-blue-500' : forecast?.revenue_class === 'average' ? 'text-yellow-500' : 'text-red-500';
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg flex items-center gap-2"><BarChart3 className="h-5 w-5" /> Demand Forecast</CardTitle>
+        <CardDescription>30-day demand projection &amp; revenue prediction</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Mini bar chart */}
+        <div className="flex items-end gap-[2px] h-24 bg-muted/30 rounded-lg p-2">
+          {curve.map((p: any, i: number) => (
+            <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
+              <div
+                className="w-full rounded-t-sm bg-primary/80 hover:bg-primary transition-colors"
+                style={{ height: `${(p.demand / maxDemand) * 100}%`, minHeight: '2px' }}
+                title={`Day ${p.day}: ${pct(p.demand)}`}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>Day 1</span><span>Day 15</span><span>Day 30</span>
+        </div>
+
+        <Separator />
+
+        <div className="grid grid-cols-3 gap-3">
+          <div className="text-center">
+            <p className="text-[10px] text-muted-foreground uppercase">Revenue Class</p>
+            <p className={`text-lg font-bold capitalize ${revenueColor}`}>{forecast?.revenue_class ?? 'N/A'}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[10px] text-muted-foreground uppercase">Opening Week</p>
+            <p className="text-lg font-bold">{pct(forecast?.opening_week_engagement ?? 0.5)}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[10px] text-muted-foreground uppercase">Confidence</p>
+            <p className="text-lg font-bold">{pct(forecast?.forecast_confidence ?? 0.5)}</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Regional Demand Card ──────────────────────────────────
+function RegionalDemandCard({ regions }: { regions: any[] }) {
+  const tierColor = (t: string) => t === 'high' ? 'bg-green-500/10 text-green-700 border-green-200' : t === 'medium' ? 'bg-yellow-500/10 text-yellow-700 border-yellow-200' : 'bg-red-500/10 text-red-700 border-red-200';
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg flex items-center gap-2"><Globe className="h-5 w-5" /> Regional Demand</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          {(regions ?? []).map((r: any, i: number) => (
+            <div key={i} className="flex items-center gap-3">
+              <span className="text-sm w-32 truncate">{r.region}</span>
+              <div className="flex-1 bg-muted rounded-full h-2.5">
+                <div className="h-2.5 rounded-full bg-primary/70 transition-all" style={{ width: `${(r.demand_strength ?? 0) * 100}%` }} />
+              </div>
+              <Badge variant="outline" className={`text-[10px] ${tierColor(r.tier)}`}>{r.tier}</Badge>
+            </div>
+          ))}
+          {(!regions || regions.length === 0) && <p className="text-sm text-muted-foreground">No regional data available</p>}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Piracy & Recommendations Card ─────────────────────────
+function PiracyAndRecsCard({ piracy, recommendations }: { piracy: any; recommendations: any[] }) {
+  const piracyColor = piracy?.level === 'high' ? 'bg-red-500/10 text-red-700 border-red-200' : piracy?.level === 'medium' ? 'bg-yellow-500/10 text-yellow-700 border-yellow-200' : 'bg-green-500/10 text-green-700 border-green-200';
+  const priorityIcon = (p: string) => p === 'high' ? <AlertTriangle className="h-3.5 w-3.5 text-red-500" /> : <Star className="h-3.5 w-3.5 text-yellow-500" />;
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg flex items-center gap-2"><Lock className="h-5 w-5" /> Piracy Risk & Recommendations</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-3">
+          <ShieldAlert className="h-5 w-5" />
+          <Badge className={piracyColor}>{piracy?.level ?? 'unknown'} risk</Badge>
+          <span className="text-sm text-muted-foreground">Score: {pct(piracy?.score ?? 0.5)}</span>
+        </div>
+
+        {piracy?.mitigations?.length > 0 && (
+          <div className="text-xs text-muted-foreground space-y-1">
+            {piracy.mitigations.map((m: string, i: number) => <p key={i}>• {m}</p>)}
+          </div>
+        )}
+
+        <Separator />
+
+        <div className="space-y-2">
+          {(recommendations ?? []).map((r: any, i: number) => (
+            <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-muted/40">
+              {priorityIcon(r.priority)}
+              <div>
+                <Badge variant="outline" className="text-[9px] mb-0.5">{r.category?.replace(/_/g, ' ')}</Badge>
+                <p className="text-sm">{r.action}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Full Demand Tab ───────────────────────────────────────
+function DemandTab({ projectId }: { projectId: string }) {
+  const [demand, setDemand] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    getPhase7Demand(Number(projectId))
+      .then(setDemand)
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [projectId]);
+
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center py-12 gap-3">
+      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      <p className="text-sm text-muted-foreground">Computing demand intelligence...</p>
+    </div>
+  );
+
+  if (error || !demand) return (
+    <div className="flex flex-col items-center justify-center py-12 gap-3">
+      <AlertCircle className="h-6 w-6 text-destructive" />
+      <p className="text-sm text-destructive">{error || 'Failed to load demand data'}</p>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <DSIGauge dsi={demand.dsi} />
+        <DemandTrendCard trend={demand.demand_trend} hypeQuality={demand.hype_quality} />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <ForecastPanel forecast={demand.forecast} />
+        <RegionalDemandCard regions={demand.regional_demand} />
+      </div>
+      <PiracyAndRecsCard piracy={demand.piracy_risk} recommendations={demand.recommendations} />
+    </div>
+  );
+}
+
+
 // ══════════════════════════════════════════════════════════════
 // MAIN PAGE
 // ══════════════════════════════════════════════════════════════
@@ -368,7 +614,7 @@ export default function Phase7Page() {
 
   useEffect(() => {
     setLoading(true);
-    getPhase7Timeline(projectId)
+    getPhase7Timeline(Number(projectId))
       .then(setData)
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
@@ -400,7 +646,15 @@ export default function Phase7Page() {
       </div>
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Phase 7: Release & Discoverability Engine</h1>
+        <div className="flex items-center gap-3 mb-2">
+          <h1 className="text-3xl font-bold">Phase 7: Release & Discoverability Engine</h1>
+          {data.demand_intelligence && (
+            <Badge variant="outline" className="text-xs flex items-center gap-1.5 border-green-300 text-green-700 bg-green-50">
+              <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" /><span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" /></span>
+              Live Signals
+            </Badge>
+          )}
+        </div>
         <p className="text-muted-foreground text-lg mb-4">Predict, optimize, and recover discoverability with data-driven intelligence.</p>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <div className="rounded-xl border bg-card p-3 text-center">
@@ -423,12 +677,19 @@ export default function Phase7Page() {
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Conversion</p>
             <p className="text-xl font-bold">{pct(conversion.conversion_probability)}</p>
           </div>
+          {data.demand_intelligence && (
+            <div className="rounded-xl border bg-card p-3 text-center border-primary/20">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">DSI</p>
+              <p className="text-xl font-bold text-primary">{data.demand_intelligence.dsi_score} <span className="text-sm">{data.demand_intelligence.dsi_grade}</span></p>
+            </div>
+          )}
         </div>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-10">
+        <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 h-10">
           <TabsTrigger value="overview" className="text-xs"><Gauge className="h-3.5 w-3.5 mr-1" /> Overview</TabsTrigger>
+          <TabsTrigger value="demand" className="text-xs"><Brain className="h-3.5 w-3.5 mr-1" /> Demand</TabsTrigger>
           <TabsTrigger value="momentum" className="text-xs"><TrendingUp className="h-3.5 w-3.5 mr-1" /> Momentum</TabsTrigger>
           <TabsTrigger value="budget" className="text-xs"><Wallet className="h-3.5 w-3.5 mr-1" /> Budget</TabsTrigger>
           <TabsTrigger value="risks" className="text-xs"><AlertTriangle className="h-3.5 w-3.5 mr-1" /> Risks</TabsTrigger>
@@ -445,6 +706,10 @@ export default function Phase7Page() {
             <ShocksCard shocks={shocks} />
             <BarriersCard barriers={barriers} />
           </div>
+        </TabsContent>
+
+        <TabsContent value="demand" className="space-y-4">
+          <DemandTab projectId={projectId} />
         </TabsContent>
 
         <TabsContent value="momentum" className="space-y-4">
